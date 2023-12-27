@@ -1,0 +1,16 @@
+﻿query GetDealers{
+    dealers{
+        nodes {
+            id
+            name
+        }
+    }
+}
+mutation CreateDealer($req: CreateDealerInput!) {
+    createDealer(request: $req) {
+        dealer {
+            id
+            name
+        }
+    }
+}

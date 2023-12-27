@@ -1,0 +1,1836 @@
+﻿schema {
+  query: Query
+  mutation: Mutation
+}
+
+enum Status {
+  OPEN
+  COMPANYHOLD
+  TOKENHOLD
+  TEMPORARYHOLD
+  SOLD
+}
+
+enum Category {
+  NONE
+  CORNER
+  DOUBLEROAD
+  MARKETFACE
+  ONEBED
+  TWOBED
+}
+
+enum UnitType {
+  SHOP
+  PLOT
+}
+
+enum SchedularType {
+  MONTHLY
+  BIMONTHLY
+  QUARTERLY
+  MONTHLYWITHQUARTERLY
+  SEMIANNUALLY
+  QUARTERLYWITHSEMIANNUALLY
+  MONTHLYWITHSEMIANNUALLY
+  ANNUALLY
+  MONTHLYWITHANNUALLY
+}
+
+enum RemainingAmountAdjustment {
+  INSTALLMENT
+  SEMIINSTALLMENT
+  DOWNPAYMENT
+  POSSESSION
+}
+
+enum AmountScheduledType {
+  PERCENTAGE
+  MANUAL
+}
+
+enum BookingType {
+  INSTALLMENT
+  FULLPAYMENT
+}
+
+type Booking {
+  id: UUID!
+  discount: Decimal!
+  bookingDate: DateTime!
+  bookingType: BookingType!
+  rebate: Decimal!
+  amountScheduledType: AmountScheduledType!
+  startDate: DateTime!
+  possession: Decimal!
+  possessionDate: DateTime
+  downPayment: Decimal!
+  downPayDate: DateTime!
+  perInstallment: Decimal!
+  annualInstallment: Decimal
+  unit: Unit!
+  customer: Customer!
+  dealer: Dealer!
+  schedularType: SchedularType!
+}
+
+type Plan {
+  id: UUID!
+  downPaymentPercentage: Float!
+  schedulerType: SchedularType!
+}
+
+enum TransactionType {
+  DEBIT
+  CREDIT
+}
+
+enum VoucherType {
+  CASHPAY
+  CASHRECEIVE
+  JOURNAL
+  PAYROLL
+  SALARY
+  PURCHASEORDER
+  PURCHASEINVOICE
+  QUOTATION
+  SALESORDER
+  SALESINVOICE
+}
+
+type Voucher {
+  id: UUID!
+  number: String!
+  date: Date!
+  type: VoucherType!
+  notes: String
+  transactions: [Transactions!]!
+}
+
+enum Role {
+  NONE
+  ADMINISTRATOR
+  ADMIN
+  CUSTOMER
+}
+
+type Account {
+  id: UUID!
+  name: String!
+  description: String
+  code: String!
+}
+
+enum FileType {
+  OTHER
+  PASSPORT
+  CNIC
+  CERTIFICATE
+}
+
+type FileRecord {
+  id: UUID!
+  name: String!
+  contentType: String
+  size: Long!
+  description: String
+  sortOrder: Int!
+  type: FileType!
+  url: String!
+}
+
+enum DealerType {
+  NONE
+}
+
+type Dealer {
+  id: UUID!
+  name: String!
+  code: String!
+  type: DealerType!
+  cnic: String!
+  isFiler: Boolean
+  ntn: Int!
+  address: Address!
+  email: String
+  phoneNumber: String
+  rebate: String
+}
+
+type Company {
+  id: UUID!
+  name: String!
+  phoneNumber: String
+  permanentAddress: String!
+  incorporationNo: Int!
+  dateOfIncorporation: DateTime!
+  email: String
+  isFiler: Boolean
+  ntn: Int
+  typeOfCompany: String!
+  fileRecords: [FileRecord!]!
+  nominees: [Nominee!]!
+}
+
+type Individual {
+  id: UUID!
+  name: String!
+  fatherName: String!
+  cnic: String
+  mailingAddress: String!
+  phoneNumber: String
+  permanentAddress: String!
+  residentialNumber: String
+  occupation: String
+  passportNo: String
+  email: String
+  dateOfBirth: DateTime!
+  fileRecords: [FileRecord!]!
+  isFiler: Boolean
+  ntn: Int
+  nominees: [Nominee!]!
+}
+
+"UploadType_Description"
+scalar Upload
+
+type BookingHistory {
+  id: UUID!
+  receivedAmount: Decimal
+  receiptDate: DateTime
+  dueAmount: Decimal!
+  dueDate: DateTime!
+  booking: Booking!
+}
+
+type Query {
+  units("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String where: UnitFilterInput order: [UnitSortInput!]): UnitsConnection
+  unit(id: UUID!): Unit
+  bookings("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String where: BookingFilterInput order: [BookingSortInput!]): BookingsConnection
+  booking(id: UUID!): Booking
+  plan(id: UUID!): Plan
+  plans("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String where: PlanFilterInput order: [PlanSortInput!]): PlansConnection
+  vouchers("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String where: VoucherFilterInput order: [VoucherSortInput!]): VouchersConnection
+  accounts("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String where: AccountFilterInput order: [AccountSortInput!]): AccountsConnection
+  thirdLevelAccounts("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String where: AccountFilterInput order: [AccountSortInput!]): ThirdLevelAccountsConnection
+  secondLevelAccounts("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String where: AccountFilterInput order: [AccountSortInput!]): SecondLevelAccountsConnection
+  firstLevelAccounts("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String where: AccountFilterInput order: [AccountSortInput!]): FirstLevelAccountsConnection
+  dealers("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String where: DealerFilterInput order: [DealerSortInput!]): DealersConnection
+  dealer(id: UUID!): Dealer
+  customers("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String where: CustomerFilterInput order: [CustomerSortInput!]): CustomersConnection
+  individual(id: UUID!): Individual
+  company(id: UUID!): Company
+  companies("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String where: CompanyFilterInput order: [CompanySortInput!]): CompaniesConnection
+  customer(id: UUID!): Customer
+  individuals("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String where: IndividualFilterInput order: [IndividualSortInput!]): IndividualsConnection
+  bookingsHistory("Returns the first _n_ elements from the list." first: Int "Returns the elements in the list that come after the specified cursor." after: String "Returns the last _n_ elements from the list." last: Int "Returns the elements in the list that come before the specified cursor." before: String where: BookingHistoryFilterInput order: [BookingHistorySortInput!]): BookingsHistoryConnection
+  bookingHistory(id: UUID!): BookingHistory
+}
+
+type Mutation {
+  createUnit(request: CreateUnitInput!): UnitPayload!
+  updateUnit(request: UpdateUnitInput!): UnitPayload!
+  createSale(request: CreateBookingInput!): BookingPayload!
+  updateSale(request: UpdateBookingInput!): BookingPayload!
+  createPlan(request: CreatePlanInput!): PlanPayLoad!
+  updatePlan(request: UpdatePlanInput!): PlanPayLoad!
+  createVoucher(request: CreateVoucherInput!): VoucherPayload!
+  createAccount(request: CreateAccountInput!): AccountPayload!
+  createDealer(request: CreateDealerInput!): DealerPayload!
+  updateDealer(request: UpdateDealerInput!): DealerPayload!
+  createIndividual(request: CreateIndividualInput!): CustomerPayload!
+  createCompany(request: CreateCompanyInput!): CustomerPayload!
+  updateIndividual(request: UpdateIndividualInput!): CustomerPayload!
+  updateCompany(request: UpdateCompayInput!): CustomerPayload!
+  deleteIndividual(id: UUID!): CustomerPayload!
+  deleteCompany(id: UUID!): CustomerPayload!
+}
+
+type BaseEvent implements IEvent {
+  id: UUID!
+  tenantId: UUID!
+  userId: UUID!
+}
+
+scalar UUID
+
+"The built-in `Decimal` scalar type."
+scalar Decimal
+
+"The `DateTime` scalar represents an ISO-8601 compliant date time type."
+scalar DateTime
+
+type Unit {
+  update(type: UnitType! size: Long! dimension: String! totalAmount: Decimal! category: Category netAmount: String description: String status: Status): Result!
+  events: [IEvent!]!
+  unitType: UnitType!
+  size: Long!
+  dimension: String
+  totalAmount: Decimal!
+  category: Category
+  netAmount: String
+  description: String
+  status: Status
+  code: String!
+  parentId: Booking!
+  isDeleted: Boolean!
+  deletedOn: DateTime
+  tenantId: UUID!
+  createdOn: DateTime!
+  createdBy: UUID
+  updatedOn: DateTime
+  updatedBy: UUID
+  id: UUID!
+}
+
+type Customer {
+  updateNominee(dto: NomineeDtoInput!): Result!
+  events: [IEvent!]!
+  name: String!
+  type: String!
+  email: String
+  phoneNumber: String
+  permanentAddress: String!
+  isDeleted: Boolean!
+  deletedOn: DateTime
+  tenantId: UUID!
+  createdOn: DateTime!
+  createdBy: UUID
+  updatedOn: DateTime
+  updatedBy: UUID
+  nominees: [Nominee!]!
+  fileRecords: [FileRecord!]!
+  id: UUID!
+}
+
+"The `Date` scalar represents an ISO-8601 compliant date type."
+scalar Date
+
+type Transactions {
+  accountId: UUID!
+  tenantId: UUID!
+  amount: Decimal!
+  description: String
+  sortOrder: Int!
+  isDeleted: Boolean!
+  deletedOn: DateTime
+  type: TransactionType!
+  voucher: [Voucher!]!
+  account: ThirdLevelAccount!
+  id: UUID!
+}
+
+"The `Long` scalar type represents non-fractional signed whole 64-bit numeric values. Long can represent values between -(2^63) and 2^63 - 1."
+scalar Long
+
+type Address {
+  country: String!
+  city: String!
+  addressLine: String
+}
+
+type Nominee {
+  updateNominee(dto: NomineeDtoInput!): Result!
+  events: [IEvent!]!
+  parentId: UUID!
+  fatherName: String!
+  cnic: String
+  passportNo: String
+  mobileNumber: String
+  residentialNumber: String
+  relationWithApplicant: String!
+  parent: Customer!
+  name: String!
+  type: String!
+  email: String
+  phoneNumber: String
+  permanentAddress: String!
+  isDeleted: Boolean!
+  deletedOn: DateTime
+  tenantId: UUID!
+  createdOn: DateTime!
+  createdBy: UUID
+  updatedOn: DateTime
+  updatedBy: UUID
+  nominees: [Nominee!]!
+  fileRecords: [FileRecord!]!
+  id: UUID!
+}
+
+input UnitFilterInput {
+  and: [UnitFilterInput!]
+  or: [UnitFilterInput!]
+  unitType: UnitTypeFilterInput
+  size: LongOperationFilterInput
+  dimension: StringOperationFilterInput
+  totalAmount: DecimalOperationFilterInput
+  category: CategoryFilterInput
+  netAmount: StringOperationFilterInput
+  description: StringOperationFilterInput
+  status: StatusFilterInput
+  code: StringOperationFilterInput
+  parentId: BookingFilterInput
+  isDeleted: BooleanOperationFilterInput
+  deletedOn: DateTimeOperationFilterInput
+  tenantId: UuidOperationFilterInput
+  createdOn: DateTimeOperationFilterInput
+  createdBy: UuidOperationFilterInput
+  updatedOn: DateTimeOperationFilterInput
+  updatedBy: UuidOperationFilterInput
+  id: UuidOperationFilterInput
+}
+
+input UnitSortInput {
+  unitType: UnitTypeSortInput
+  size: SortEnumType
+  dimension: SortEnumType
+  totalAmount: SortEnumType
+  category: CategorySortInput
+  netAmount: SortEnumType
+  description: SortEnumType
+  status: StatusSortInput
+  code: SortEnumType
+  parentId: BookingSortInput
+  isDeleted: SortEnumType
+  deletedOn: SortEnumType
+  tenantId: SortEnumType
+  createdOn: SortEnumType
+  createdBy: SortEnumType
+  updatedOn: SortEnumType
+  updatedBy: SortEnumType
+  id: SortEnumType
+}
+
+"A connection to a list of items."
+type UnitsConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [UnitsEdge!]
+  "A flattened list of the nodes."
+  nodes: [Unit!]
+}
+
+input BookingFilterInput {
+  and: [BookingFilterInput!]
+  or: [BookingFilterInput!]
+  discount: DecimalOperationFilterInput
+  bookingDate: DateTimeOperationFilterInput
+  bookingType: BookingTypeFilterInput
+  dealerId: UuidOperationFilterInput
+  customerId: UuidOperationFilterInput
+  unitId: UuidOperationFilterInput
+  rebate: DecimalOperationFilterInput
+  amountScheduledType: AmountScheduledTypeFilterInput
+  schedularType: SchedularTypeFilterInput
+  startDate: DateTimeOperationFilterInput
+  possession: DecimalOperationFilterInput
+  authorizedDealer: StringOperationFilterInput
+  possessionDate: DateTimeOperationFilterInput
+  downPayment: DecimalOperationFilterInput
+  downPayDate: DateTimeOperationFilterInput
+  perInstallment: DecimalOperationFilterInput
+  paymentHeadCode: StringOperationFilterInput
+  annualInstallment: DecimalOperationFilterInput
+  remainingAmountAdjustment: RemainingAmountAdjustmentFilterInput
+  isDeleted: BooleanOperationFilterInput
+  deletedOn: DateTimeOperationFilterInput
+  tenantId: UuidOperationFilterInput
+  createdOn: DateTimeOperationFilterInput
+  createdBy: UuidOperationFilterInput
+  updatedOn: DateTimeOperationFilterInput
+  updatedBy: UuidOperationFilterInput
+  customer: CustomerFilterInput
+  unit: UnitFilterInput
+  dealer: DealerFilterInput
+  bookingHistories: ListFilterInputTypeOfBookingHistoryFilterInput
+  id: UuidOperationFilterInput
+}
+
+input BookingSortInput {
+  discount: SortEnumType
+  bookingDate: SortEnumType
+  bookingType: BookingTypeSortInput
+  dealerId: SortEnumType
+  customerId: SortEnumType
+  unitId: SortEnumType
+  rebate: SortEnumType
+  amountScheduledType: AmountScheduledTypeSortInput
+  schedularType: SchedularTypeSortInput
+  startDate: SortEnumType
+  possession: SortEnumType
+  authorizedDealer: SortEnumType
+  possessionDate: SortEnumType
+  downPayment: SortEnumType
+  downPayDate: SortEnumType
+  perInstallment: SortEnumType
+  paymentHeadCode: SortEnumType
+  annualInstallment: SortEnumType
+  remainingAmountAdjustment: RemainingAmountAdjustmentSortInput
+  isDeleted: SortEnumType
+  deletedOn: SortEnumType
+  tenantId: SortEnumType
+  createdOn: SortEnumType
+  createdBy: SortEnumType
+  updatedOn: SortEnumType
+  updatedBy: SortEnumType
+  customer: CustomerSortInput
+  unit: UnitSortInput
+  dealer: DealerSortInput
+  id: SortEnumType
+}
+
+"A connection to a list of items."
+type BookingsConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [BookingsEdge!]
+  "A flattened list of the nodes."
+  nodes: [Booking!]
+}
+
+input PlanFilterInput {
+  and: [PlanFilterInput!]
+  or: [PlanFilterInput!]
+  downPaymentPercentage: FloatOperationFilterInput
+  schedulerType: SchedularTypeFilterInput
+  isDeleted: BooleanOperationFilterInput
+  deletedOn: DateTimeOperationFilterInput
+  tenantId: UuidOperationFilterInput
+  createdOn: DateTimeOperationFilterInput
+  createdBy: UuidOperationFilterInput
+  updatedOn: DateTimeOperationFilterInput
+  updatedBy: UuidOperationFilterInput
+  id: UuidOperationFilterInput
+}
+
+input PlanSortInput {
+  downPaymentPercentage: SortEnumType
+  schedulerType: SchedularTypeSortInput
+  isDeleted: SortEnumType
+  deletedOn: SortEnumType
+  tenantId: SortEnumType
+  createdOn: SortEnumType
+  createdBy: SortEnumType
+  updatedOn: SortEnumType
+  updatedBy: SortEnumType
+  id: SortEnumType
+}
+
+"A connection to a list of items."
+type PlansConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [PlansEdge!]
+  "A flattened list of the nodes."
+  nodes: [Plan!]
+}
+
+input VoucherFilterInput {
+  and: [VoucherFilterInput!]
+  or: [VoucherFilterInput!]
+  tenantId: UuidOperationFilterInput
+  createdOn: DateTimeOperationFilterInput
+  createdBy: UuidOperationFilterInput
+  updatedOn: DateTimeOperationFilterInput
+  updatedBy: UuidOperationFilterInput
+  isDeleted: BooleanOperationFilterInput
+  deletedOn: DateTimeOperationFilterInput
+  number: StringOperationFilterInput
+  notes: StringOperationFilterInput
+  date: DateOperationFilterInput
+  type: VoucherTypeFilterInput
+  transactions: ListFilterInputTypeOfTransactionsFilterInput
+  id: UuidOperationFilterInput
+}
+
+input VoucherSortInput {
+  tenantId: SortEnumType
+  createdOn: SortEnumType
+  createdBy: SortEnumType
+  updatedOn: SortEnumType
+  updatedBy: SortEnumType
+  isDeleted: SortEnumType
+  deletedOn: SortEnumType
+  number: SortEnumType
+  notes: SortEnumType
+  date: SortEnumType
+  type: VoucherTypeSortInput
+  id: SortEnumType
+}
+
+"A connection to a list of items."
+type VouchersConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [VouchersEdge!]
+  "A flattened list of the nodes."
+  nodes: [Voucher!]
+}
+
+input AccountFilterInput {
+  and: [AccountFilterInput!]
+  or: [AccountFilterInput!]
+  name: StringOperationFilterInput
+  code: StringOperationFilterInput
+  description: StringOperationFilterInput
+  roles: ListFilterInputTypeOfRoleFilterInput
+  sortOrder: IntOperationFilterInput
+  createdOn: DateTimeOperationFilterInput
+  createdBy: UuidOperationFilterInput
+  updatedOn: DateTimeOperationFilterInput
+  updatedBy: UuidOperationFilterInput
+  tenantId: UuidOperationFilterInput
+  isDeleted: BooleanOperationFilterInput
+  deletedOn: DateTimeOperationFilterInput
+  id: UuidOperationFilterInput
+}
+
+input AccountSortInput {
+  name: SortEnumType
+  code: SortEnumType
+  description: SortEnumType
+  sortOrder: SortEnumType
+  createdOn: SortEnumType
+  createdBy: SortEnumType
+  updatedOn: SortEnumType
+  updatedBy: SortEnumType
+  tenantId: SortEnumType
+  isDeleted: SortEnumType
+  deletedOn: SortEnumType
+  id: SortEnumType
+}
+
+"A connection to a list of items."
+type AccountsConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [AccountsEdge!]
+  "A flattened list of the nodes."
+  nodes: [Account!]
+}
+
+"A connection to a list of items."
+type ThirdLevelAccountsConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [ThirdLevelAccountsEdge!]
+  "A flattened list of the nodes."
+  nodes: [Account!]
+}
+
+"A connection to a list of items."
+type SecondLevelAccountsConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [SecondLevelAccountsEdge!]
+  "A flattened list of the nodes."
+  nodes: [Account!]
+}
+
+"A connection to a list of items."
+type FirstLevelAccountsConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [FirstLevelAccountsEdge!]
+  "A flattened list of the nodes."
+  nodes: [Account!]
+}
+
+input DealerFilterInput {
+  and: [DealerFilterInput!]
+  or: [DealerFilterInput!]
+  name: StringOperationFilterInput
+  code: StringOperationFilterInput
+  type: DealerTypeFilterInput
+  cnic: StringOperationFilterInput
+  isFiler: BooleanOperationFilterInput
+  ntn: IntOperationFilterInput
+  address: AddressFilterInput
+  email: StringOperationFilterInput
+  phoneNumber: StringOperationFilterInput
+  rebate: StringOperationFilterInput
+  isDeleted: BooleanOperationFilterInput
+  deletedOn: DateTimeOperationFilterInput
+  tenantId: UuidOperationFilterInput
+  createdOn: DateTimeOperationFilterInput
+  createdBy: UuidOperationFilterInput
+  updatedOn: DateTimeOperationFilterInput
+  updatedBy: UuidOperationFilterInput
+  id: UuidOperationFilterInput
+}
+
+input DealerSortInput {
+  name: SortEnumType
+  code: SortEnumType
+  type: DealerTypeSortInput
+  cnic: SortEnumType
+  isFiler: SortEnumType
+  ntn: SortEnumType
+  address: AddressSortInput
+  email: SortEnumType
+  phoneNumber: SortEnumType
+  rebate: SortEnumType
+  isDeleted: SortEnumType
+  deletedOn: SortEnumType
+  tenantId: SortEnumType
+  createdOn: SortEnumType
+  createdBy: SortEnumType
+  updatedOn: SortEnumType
+  updatedBy: SortEnumType
+  id: SortEnumType
+}
+
+"A connection to a list of items."
+type DealersConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [DealersEdge!]
+  "A flattened list of the nodes."
+  nodes: [Dealer!]
+}
+
+input CustomerFilterInput {
+  and: [CustomerFilterInput!]
+  or: [CustomerFilterInput!]
+  name: StringOperationFilterInput
+  type: StringOperationFilterInput
+  email: StringOperationFilterInput
+  phoneNumber: StringOperationFilterInput
+  permanentAddress: StringOperationFilterInput
+  isDeleted: BooleanOperationFilterInput
+  deletedOn: DateTimeOperationFilterInput
+  tenantId: UuidOperationFilterInput
+  createdOn: DateTimeOperationFilterInput
+  createdBy: UuidOperationFilterInput
+  updatedOn: DateTimeOperationFilterInput
+  updatedBy: UuidOperationFilterInput
+  nominees: ListFilterInputTypeOfNomineeFilterInput
+  fileRecords: ListFilterInputTypeOfFileRecordFilterInput
+  id: UuidOperationFilterInput
+}
+
+input CustomerSortInput {
+  name: SortEnumType
+  type: SortEnumType
+  email: SortEnumType
+  phoneNumber: SortEnumType
+  permanentAddress: SortEnumType
+  isDeleted: SortEnumType
+  deletedOn: SortEnumType
+  tenantId: SortEnumType
+  createdOn: SortEnumType
+  createdBy: SortEnumType
+  updatedOn: SortEnumType
+  updatedBy: SortEnumType
+  id: SortEnumType
+}
+
+input CompanyFilterInput {
+  and: [CompanyFilterInput!]
+  or: [CompanyFilterInput!]
+  incorporationNo: IntOperationFilterInput
+  dateOfIncorporation: DateTimeOperationFilterInput
+  typeOfCompany: StringOperationFilterInput
+  isFiler: BooleanOperationFilterInput
+  ntn: IntOperationFilterInput
+  code: StringOperationFilterInput
+  name: StringOperationFilterInput
+  type: StringOperationFilterInput
+  email: StringOperationFilterInput
+  phoneNumber: StringOperationFilterInput
+  permanentAddress: StringOperationFilterInput
+  isDeleted: BooleanOperationFilterInput
+  deletedOn: DateTimeOperationFilterInput
+  tenantId: UuidOperationFilterInput
+  createdOn: DateTimeOperationFilterInput
+  createdBy: UuidOperationFilterInput
+  updatedOn: DateTimeOperationFilterInput
+  updatedBy: UuidOperationFilterInput
+  nominees: ListFilterInputTypeOfNomineeFilterInput
+  fileRecords: ListFilterInputTypeOfFileRecordFilterInput
+  id: UuidOperationFilterInput
+}
+
+input CompanySortInput {
+  incorporationNo: SortEnumType
+  dateOfIncorporation: SortEnumType
+  typeOfCompany: SortEnumType
+  isFiler: SortEnumType
+  ntn: SortEnumType
+  code: SortEnumType
+  name: SortEnumType
+  type: SortEnumType
+  email: SortEnumType
+  phoneNumber: SortEnumType
+  permanentAddress: SortEnumType
+  isDeleted: SortEnumType
+  deletedOn: SortEnumType
+  tenantId: SortEnumType
+  createdOn: SortEnumType
+  createdBy: SortEnumType
+  updatedOn: SortEnumType
+  updatedBy: SortEnumType
+  id: SortEnumType
+}
+
+input IndividualFilterInput {
+  and: [IndividualFilterInput!]
+  or: [IndividualFilterInput!]
+  fatherName: StringOperationFilterInput
+  cnic: StringOperationFilterInput
+  passportNo: StringOperationFilterInput
+  dateOfBirth: DateTimeOperationFilterInput
+  occupation: StringOperationFilterInput
+  mailingAddress: StringOperationFilterInput
+  residentialNumber: StringOperationFilterInput
+  isFiler: BooleanOperationFilterInput
+  ntn: IntOperationFilterInput
+  code: StringOperationFilterInput
+  name: StringOperationFilterInput
+  type: StringOperationFilterInput
+  email: StringOperationFilterInput
+  phoneNumber: StringOperationFilterInput
+  permanentAddress: StringOperationFilterInput
+  isDeleted: BooleanOperationFilterInput
+  deletedOn: DateTimeOperationFilterInput
+  tenantId: UuidOperationFilterInput
+  createdOn: DateTimeOperationFilterInput
+  createdBy: UuidOperationFilterInput
+  updatedOn: DateTimeOperationFilterInput
+  updatedBy: UuidOperationFilterInput
+  nominees: ListFilterInputTypeOfNomineeFilterInput
+  fileRecords: ListFilterInputTypeOfFileRecordFilterInput
+  id: UuidOperationFilterInput
+}
+
+input IndividualSortInput {
+  fatherName: SortEnumType
+  cnic: SortEnumType
+  passportNo: SortEnumType
+  dateOfBirth: SortEnumType
+  occupation: SortEnumType
+  mailingAddress: SortEnumType
+  residentialNumber: SortEnumType
+  isFiler: SortEnumType
+  ntn: SortEnumType
+  code: SortEnumType
+  name: SortEnumType
+  type: SortEnumType
+  email: SortEnumType
+  phoneNumber: SortEnumType
+  permanentAddress: SortEnumType
+  isDeleted: SortEnumType
+  deletedOn: SortEnumType
+  tenantId: SortEnumType
+  createdOn: SortEnumType
+  createdBy: SortEnumType
+  updatedOn: SortEnumType
+  updatedBy: SortEnumType
+  id: SortEnumType
+}
+
+"A connection to a list of items."
+type CustomersConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [CustomersEdge!]
+  "A flattened list of the nodes."
+  nodes: [Customer!]
+}
+
+"A connection to a list of items."
+type CompaniesConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [CompaniesEdge!]
+  "A flattened list of the nodes."
+  nodes: [Company!]
+}
+
+"A connection to a list of items."
+type IndividualsConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [IndividualsEdge!]
+  "A flattened list of the nodes."
+  nodes: [Individual!]
+}
+
+input BookingHistoryFilterInput {
+  and: [BookingHistoryFilterInput!]
+  or: [BookingHistoryFilterInput!]
+  dueDate: DateTimeOperationFilterInput
+  dueAmount: DecimalOperationFilterInput
+  bookingId: UuidOperationFilterInput
+  receiptId: UuidOperationFilterInput
+  receivedAmount: DecimalOperationFilterInput
+  receiptDate: DateTimeOperationFilterInput
+  totalInstallments: IntOperationFilterInput
+  isDeleted: BooleanOperationFilterInput
+  deletedOn: DateTimeOperationFilterInput
+  tenantId: UuidOperationFilterInput
+  createdOn: DateTimeOperationFilterInput
+  createdBy: UuidOperationFilterInput
+  updatedOn: DateTimeOperationFilterInput
+  updatedBy: UuidOperationFilterInput
+  booking: BookingFilterInput
+  id: UuidOperationFilterInput
+}
+
+input BookingHistorySortInput {
+  dueDate: SortEnumType
+  dueAmount: SortEnumType
+  bookingId: SortEnumType
+  receiptId: SortEnumType
+  receivedAmount: SortEnumType
+  receiptDate: SortEnumType
+  totalInstallments: SortEnumType
+  isDeleted: SortEnumType
+  deletedOn: SortEnumType
+  tenantId: SortEnumType
+  createdOn: SortEnumType
+  createdBy: SortEnumType
+  updatedOn: SortEnumType
+  updatedBy: SortEnumType
+  booking: BookingSortInput
+  id: SortEnumType
+}
+
+"A connection to a list of items."
+type BookingsHistoryConnection {
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "A list of edges."
+  edges: [BookingsHistoryEdge!]
+  "A flattened list of the nodes."
+  nodes: [BookingHistory!]
+}
+
+input UnitTypeFilterInput {
+  and: [UnitTypeFilterInput!]
+  or: [UnitTypeFilterInput!]
+  name: StringOperationFilterInput
+  value: ByteOperationFilterInput
+}
+
+input LongOperationFilterInput {
+  eq: Long
+  neq: Long
+  in: [Long]
+  nin: [Long]
+  gt: Long
+  ngt: Long
+  gte: Long
+  ngte: Long
+  lt: Long
+  nlt: Long
+  lte: Long
+  nlte: Long
+}
+
+input StringOperationFilterInput {
+  and: [StringOperationFilterInput!]
+  or: [StringOperationFilterInput!]
+  eq: String
+  neq: String
+  contains: String
+  ncontains: String
+  in: [String]
+  nin: [String]
+  startsWith: String
+  nstartsWith: String
+  endsWith: String
+  nendsWith: String
+}
+
+input DecimalOperationFilterInput {
+  eq: Decimal
+  neq: Decimal
+  in: [Decimal]
+  nin: [Decimal]
+  gt: Decimal
+  ngt: Decimal
+  gte: Decimal
+  ngte: Decimal
+  lt: Decimal
+  nlt: Decimal
+  lte: Decimal
+  nlte: Decimal
+}
+
+input CategoryFilterInput {
+  and: [CategoryFilterInput!]
+  or: [CategoryFilterInput!]
+  name: StringOperationFilterInput
+  value: ByteOperationFilterInput
+}
+
+input StatusFilterInput {
+  and: [StatusFilterInput!]
+  or: [StatusFilterInput!]
+  name: StringOperationFilterInput
+  value: ByteOperationFilterInput
+}
+
+input BooleanOperationFilterInput {
+  eq: Boolean
+  neq: Boolean
+}
+
+input DateTimeOperationFilterInput {
+  eq: DateTime
+  neq: DateTime
+  in: [DateTime]
+  nin: [DateTime]
+  gt: DateTime
+  ngt: DateTime
+  gte: DateTime
+  ngte: DateTime
+  lt: DateTime
+  nlt: DateTime
+  lte: DateTime
+  nlte: DateTime
+}
+
+input UuidOperationFilterInput {
+  eq: UUID
+  neq: UUID
+  in: [UUID]
+  nin: [UUID]
+  gt: UUID
+  ngt: UUID
+  gte: UUID
+  ngte: UUID
+  lt: UUID
+  nlt: UUID
+  lte: UUID
+  nlte: UUID
+}
+
+input UnitTypeSortInput {
+  name: SortEnumType
+  value: SortEnumType
+}
+
+enum SortEnumType {
+  ASC
+  DESC
+}
+
+input CategorySortInput {
+  name: SortEnumType
+  value: SortEnumType
+}
+
+input StatusSortInput {
+  name: SortEnumType
+  value: SortEnumType
+}
+
+"Information about pagination in a connection."
+type PageInfo {
+  "Indicates whether more edges exist following the set defined by the clients arguments."
+  hasNextPage: Boolean!
+  "Indicates whether more edges exist prior the set defined by the clients arguments."
+  hasPreviousPage: Boolean!
+  "When paginating backwards, the cursor to continue."
+  startCursor: String
+  "When paginating forwards, the cursor to continue."
+  endCursor: String
+}
+
+"An edge in a connection."
+type UnitsEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: Unit!
+}
+
+input BookingTypeFilterInput {
+  and: [BookingTypeFilterInput!]
+  or: [BookingTypeFilterInput!]
+  name: StringOperationFilterInput
+  value: ByteOperationFilterInput
+}
+
+input AmountScheduledTypeFilterInput {
+  and: [AmountScheduledTypeFilterInput!]
+  or: [AmountScheduledTypeFilterInput!]
+  name: StringOperationFilterInput
+  value: ByteOperationFilterInput
+}
+
+input SchedularTypeFilterInput {
+  and: [SchedularTypeFilterInput!]
+  or: [SchedularTypeFilterInput!]
+  name: StringOperationFilterInput
+  value: ByteOperationFilterInput
+}
+
+input RemainingAmountAdjustmentFilterInput {
+  and: [RemainingAmountAdjustmentFilterInput!]
+  or: [RemainingAmountAdjustmentFilterInput!]
+  name: StringOperationFilterInput
+  value: ByteOperationFilterInput
+}
+
+input ListFilterInputTypeOfBookingHistoryFilterInput {
+  all: BookingHistoryFilterInput
+  none: BookingHistoryFilterInput
+  some: BookingHistoryFilterInput
+  any: Boolean
+}
+
+input BookingTypeSortInput {
+  name: SortEnumType
+  value: SortEnumType
+}
+
+input AmountScheduledTypeSortInput {
+  name: SortEnumType
+  value: SortEnumType
+}
+
+input SchedularTypeSortInput {
+  name: SortEnumType
+  value: SortEnumType
+}
+
+input RemainingAmountAdjustmentSortInput {
+  name: SortEnumType
+  value: SortEnumType
+}
+
+"An edge in a connection."
+type BookingsEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: Booking!
+}
+
+input FloatOperationFilterInput {
+  eq: Float
+  neq: Float
+  in: [Float]
+  nin: [Float]
+  gt: Float
+  ngt: Float
+  gte: Float
+  ngte: Float
+  lt: Float
+  nlt: Float
+  lte: Float
+  nlte: Float
+}
+
+"An edge in a connection."
+type PlansEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: Plan!
+}
+
+input DateOperationFilterInput {
+  eq: Date
+  neq: Date
+  in: [Date]
+  nin: [Date]
+  gt: Date
+  ngt: Date
+  gte: Date
+  ngte: Date
+  lt: Date
+  nlt: Date
+  lte: Date
+  nlte: Date
+}
+
+input VoucherTypeFilterInput {
+  and: [VoucherTypeFilterInput!]
+  or: [VoucherTypeFilterInput!]
+  code: StringOperationFilterInput
+  name: StringOperationFilterInput
+  value: ByteOperationFilterInput
+}
+
+input ListFilterInputTypeOfTransactionsFilterInput {
+  all: TransactionsFilterInput
+  none: TransactionsFilterInput
+  some: TransactionsFilterInput
+  any: Boolean
+}
+
+input VoucherTypeSortInput {
+  code: SortEnumType
+  name: SortEnumType
+  value: SortEnumType
+}
+
+"An edge in a connection."
+type VouchersEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: Voucher!
+}
+
+input ListFilterInputTypeOfRoleFilterInput {
+  all: RoleFilterInput
+  none: RoleFilterInput
+  some: RoleFilterInput
+  any: Boolean
+}
+
+input IntOperationFilterInput {
+  eq: Int
+  neq: Int
+  in: [Int]
+  nin: [Int]
+  gt: Int
+  ngt: Int
+  gte: Int
+  ngte: Int
+  lt: Int
+  nlt: Int
+  lte: Int
+  nlte: Int
+}
+
+"An edge in a connection."
+type AccountsEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: Account!
+}
+
+"An edge in a connection."
+type ThirdLevelAccountsEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: Account!
+}
+
+"An edge in a connection."
+type SecondLevelAccountsEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: Account!
+}
+
+"An edge in a connection."
+type FirstLevelAccountsEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: Account!
+}
+
+input DealerTypeFilterInput {
+  and: [DealerTypeFilterInput!]
+  or: [DealerTypeFilterInput!]
+  name: StringOperationFilterInput
+  value: ByteOperationFilterInput
+}
+
+input AddressFilterInput {
+  and: [AddressFilterInput!]
+  or: [AddressFilterInput!]
+  country: StringOperationFilterInput
+  city: StringOperationFilterInput
+  addressLine: StringOperationFilterInput
+}
+
+input DealerTypeSortInput {
+  name: SortEnumType
+  value: SortEnumType
+}
+
+input AddressSortInput {
+  country: SortEnumType
+  city: SortEnumType
+  addressLine: SortEnumType
+}
+
+"An edge in a connection."
+type DealersEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: Dealer!
+}
+
+input ListFilterInputTypeOfNomineeFilterInput {
+  all: NomineeFilterInput
+  none: NomineeFilterInput
+  some: NomineeFilterInput
+  any: Boolean
+}
+
+input ListFilterInputTypeOfFileRecordFilterInput {
+  all: FileRecordFilterInput
+  none: FileRecordFilterInput
+  some: FileRecordFilterInput
+  any: Boolean
+}
+
+"An edge in a connection."
+type CustomersEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: Customer!
+}
+
+"An edge in a connection."
+type CompaniesEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: Company!
+}
+
+"An edge in a connection."
+type IndividualsEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: Individual!
+}
+
+"An edge in a connection."
+type BookingsHistoryEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: BookingHistory!
+}
+
+input ByteOperationFilterInput {
+  eq: Byte
+  neq: Byte
+  in: [Byte]
+  nin: [Byte]
+  gt: Byte
+  ngt: Byte
+  gte: Byte
+  ngte: Byte
+  lt: Byte
+  nlt: Byte
+  lte: Byte
+  nlte: Byte
+}
+
+input TransactionsFilterInput {
+  and: [TransactionsFilterInput!]
+  or: [TransactionsFilterInput!]
+  accountId: UuidOperationFilterInput
+  tenantId: UuidOperationFilterInput
+  amount: DecimalOperationFilterInput
+  description: StringOperationFilterInput
+  sortOrder: IntOperationFilterInput
+  isDeleted: BooleanOperationFilterInput
+  deletedOn: DateTimeOperationFilterInput
+  type: TransactionTypeFilterInput
+  voucher: ListFilterInputTypeOfVoucherFilterInput
+  account: ThirdLevelAccountFilterInput
+  id: UuidOperationFilterInput
+}
+
+input RoleFilterInput {
+  and: [RoleFilterInput!]
+  or: [RoleFilterInput!]
+  name: StringOperationFilterInput
+  value: IntOperationFilterInput
+}
+
+input NomineeFilterInput {
+  and: [NomineeFilterInput!]
+  or: [NomineeFilterInput!]
+  parentId: UuidOperationFilterInput
+  fatherName: StringOperationFilterInput
+  cnic: StringOperationFilterInput
+  passportNo: StringOperationFilterInput
+  mobileNumber: StringOperationFilterInput
+  residentialNumber: StringOperationFilterInput
+  relationWithApplicant: StringOperationFilterInput
+  parent: CustomerFilterInput
+  name: StringOperationFilterInput
+  type: StringOperationFilterInput
+  email: StringOperationFilterInput
+  phoneNumber: StringOperationFilterInput
+  permanentAddress: StringOperationFilterInput
+  isDeleted: BooleanOperationFilterInput
+  deletedOn: DateTimeOperationFilterInput
+  tenantId: UuidOperationFilterInput
+  createdOn: DateTimeOperationFilterInput
+  createdBy: UuidOperationFilterInput
+  updatedOn: DateTimeOperationFilterInput
+  updatedBy: UuidOperationFilterInput
+  nominees: ListFilterInputTypeOfNomineeFilterInput
+  fileRecords: ListFilterInputTypeOfFileRecordFilterInput
+  id: UuidOperationFilterInput
+}
+
+input FileRecordFilterInput {
+  and: [FileRecordFilterInput!]
+  or: [FileRecordFilterInput!]
+  name: StringOperationFilterInput
+  contentType: StringOperationFilterInput
+  size: LongOperationFilterInput
+  description: StringOperationFilterInput
+  sortOrder: IntOperationFilterInput
+  type: FileTypeFilterInput
+  path: StringOperationFilterInput
+  createdOn: DateTimeOperationFilterInput
+  createdBy: UuidOperationFilterInput
+  updatedOn: DateTimeOperationFilterInput
+  updatedBy: UuidOperationFilterInput
+  tenantId: UuidOperationFilterInput
+  isDeleted: BooleanOperationFilterInput
+  deletedOn: DateTimeOperationFilterInput
+  id: UuidOperationFilterInput
+}
+
+"The `Byte` scalar type represents non-fractional whole numeric values. Byte can represent values between 0 and 255."
+scalar Byte
+
+input TransactionTypeFilterInput {
+  and: [TransactionTypeFilterInput!]
+  or: [TransactionTypeFilterInput!]
+  name: StringOperationFilterInput
+  value: ByteOperationFilterInput
+}
+
+input ListFilterInputTypeOfVoucherFilterInput {
+  all: VoucherFilterInput
+  none: VoucherFilterInput
+  some: VoucherFilterInput
+  any: Boolean
+}
+
+input ThirdLevelAccountFilterInput {
+  and: [ThirdLevelAccountFilterInput!]
+  or: [ThirdLevelAccountFilterInput!]
+  secondLevelAccountId: UuidOperationFilterInput
+  secondLevelAccount: SecondLevelAccountFilterInput
+  voucherLineItems: ListFilterInputTypeOfTransactionsFilterInput
+  name: StringOperationFilterInput
+  code: StringOperationFilterInput
+  description: StringOperationFilterInput
+  roles: ListFilterInputTypeOfRoleFilterInput
+  sortOrder: IntOperationFilterInput
+  createdOn: DateTimeOperationFilterInput
+  createdBy: UuidOperationFilterInput
+  updatedOn: DateTimeOperationFilterInput
+  updatedBy: UuidOperationFilterInput
+  tenantId: UuidOperationFilterInput
+  isDeleted: BooleanOperationFilterInput
+  deletedOn: DateTimeOperationFilterInput
+  id: UuidOperationFilterInput
+}
+
+input FileTypeFilterInput {
+  and: [FileTypeFilterInput!]
+  or: [FileTypeFilterInput!]
+  path: StringOperationFilterInput
+  name: StringOperationFilterInput
+  value: ByteOperationFilterInput
+}
+
+input SecondLevelAccountFilterInput {
+  and: [SecondLevelAccountFilterInput!]
+  or: [SecondLevelAccountFilterInput!]
+  firstLevelAccountId: UuidOperationFilterInput
+  firstLevelAccount: FirstLevelAccountFilterInput
+  thirdLevelAccounts: ListFilterInputTypeOfThirdLevelAccountFilterInput
+  name: StringOperationFilterInput
+  code: StringOperationFilterInput
+  description: StringOperationFilterInput
+  roles: ListFilterInputTypeOfRoleFilterInput
+  sortOrder: IntOperationFilterInput
+  createdOn: DateTimeOperationFilterInput
+  createdBy: UuidOperationFilterInput
+  updatedOn: DateTimeOperationFilterInput
+  updatedBy: UuidOperationFilterInput
+  tenantId: UuidOperationFilterInput
+  isDeleted: BooleanOperationFilterInput
+  deletedOn: DateTimeOperationFilterInput
+  id: UuidOperationFilterInput
+}
+
+input FirstLevelAccountFilterInput {
+  and: [FirstLevelAccountFilterInput!]
+  or: [FirstLevelAccountFilterInput!]
+  secondLevelAccounts: ListFilterInputTypeOfSecondLevelAccountFilterInput
+  name: StringOperationFilterInput
+  code: StringOperationFilterInput
+  description: StringOperationFilterInput
+  roles: ListFilterInputTypeOfRoleFilterInput
+  sortOrder: IntOperationFilterInput
+  createdOn: DateTimeOperationFilterInput
+  createdBy: UuidOperationFilterInput
+  updatedOn: DateTimeOperationFilterInput
+  updatedBy: UuidOperationFilterInput
+  tenantId: UuidOperationFilterInput
+  isDeleted: BooleanOperationFilterInput
+  deletedOn: DateTimeOperationFilterInput
+  id: UuidOperationFilterInput
+}
+
+input ListFilterInputTypeOfThirdLevelAccountFilterInput {
+  all: ThirdLevelAccountFilterInput
+  none: ThirdLevelAccountFilterInput
+  some: ThirdLevelAccountFilterInput
+  any: Boolean
+}
+
+input ListFilterInputTypeOfSecondLevelAccountFilterInput {
+  all: SecondLevelAccountFilterInput
+  none: SecondLevelAccountFilterInput
+  some: SecondLevelAccountFilterInput
+  any: Boolean
+}
+
+type ThirdLevelAccount {
+  events: [IEvent!]!
+  secondLevelAccountId: UUID!
+  secondLevelAccount: SecondLevelAccount!
+  voucherLineItems: [Transactions!]!
+  name: String!
+  code: String!
+  description: String
+  roles: [Role!]!
+  sortOrder: Int!
+  createdOn: DateTime!
+  createdBy: UUID
+  updatedOn: DateTime
+  updatedBy: UUID
+  tenantId: UUID!
+  isDeleted: Boolean!
+  deletedOn: DateTime
+  id: UUID!
+}
+
+input NomineeDtoInput {
+  name: String!
+  permanentAddress: String
+  mailingAddress: String
+  email: String
+  fatherName: String!
+  cnic: String!
+  passportNo: String
+  mobileNumber: String
+  phoneNumber: String
+  residentialNumber: String
+  relationWithApplicant: String!
+}
+
+interface IEvent {
+  id: UUID!
+}
+
+type Result {
+  isFailure: Boolean!
+  isSuccess: Boolean!
+  error: String
+}
+
+input UpdateCompayInput {
+  id: UUID!
+  name: String!
+  permanentAddress: String!
+  email: String!
+  incorporationNo: Int!
+  dateOfIncorporation: DateTime!
+  typeOfCompany: String!
+  phoneNumber: String!
+  residentialNumber: String
+  isfiler: Boolean
+  ntn: Int
+  nominee: NomineeDtoInput!
+}
+
+input UpdateIndividualInput {
+  id: UUID!
+  name: String!
+  permanentAddress: String!
+  email: String!
+  fatherName: String!
+  cnic: String
+  passportNo: String
+  dateOfBirth: DateTime!
+  occupation: String
+  mailingAddress: String!
+  phoneNumber: String
+  residentialNumber: String
+  isFiler: Boolean
+  ntn: Int
+  nominee: NomineeDtoInput!
+}
+
+input CreateCompanyInput {
+  name: String!
+  permanentAddress: String!
+  email: String!
+  incorporationNo: Int!
+  dateOfIncorporation: DateTime!
+  typeOfCompany: String!
+  phoneNumber: String!
+  certificate: Upload
+  isFiler: Boolean
+  ntn: Int
+  nominee: NomineeDtoInput!
+}
+
+input CreateIndividualInput {
+  name: String!
+  permanentAddress: String!
+  email: String
+  fatherName: String!
+  cnic: String!
+  passportNo: String
+  dateOfBirth: DateTime!
+  occupation: String
+  mailingAddress: String!
+  phoneNumber: String
+  residentialNumber: String
+  isFiler: Boolean
+  ntn: Int
+  documents: [Upload!]
+  passportPic: Upload
+  nominee: NomineeDtoInput!
+}
+
+type CustomerPayload {
+  individual: Individual
+  company: Company
+  customer: Customer
+  errors: [Error!]
+  isSuccess: Boolean!
+}
+
+input UpdateDealerInput {
+  id: UUID!
+  name: String!
+  type: DealerType!
+  cnic: String!
+  isFiler: Boolean
+  ntn: Int!
+  address: AddressInput!
+  email: String
+  phoneNumber: String
+  rebate: String
+}
+
+input CreateDealerInput {
+  name: String!
+  type: DealerType!
+  cnic: String!
+  isFiler: Boolean
+  ntn: Int!
+  address: AddressInput!
+  email: String
+  phoneNumber: String
+  rebate: String
+}
+
+type DealerPayload {
+  dealer: Dealer
+  errors: [Error!]
+  isSuccess: Boolean!
+}
+
+input CreateAccountInput {
+  secondLevelAccountId: UUID!
+  name: String!
+  code: String!
+  description: String
+  sortOrder: Int
+}
+
+type AccountPayload {
+  account: Account
+  errors: [Error!]
+  isSuccess: Boolean!
+}
+
+input CreateVoucherInput {
+  voucherType: VoucherType!
+  notes: String
+  date: Date!
+  lineItems: [TransactionInput!]!
+}
+
+type VoucherPayload {
+  voucher: Voucher
+  errors: [Error!]
+  isSuccess: Boolean!
+}
+
+input UpdatePlanInput {
+  id: UUID!
+  downPaymentPercentage: Float!
+  schedulerType: SchedularType!
+}
+
+input CreatePlanInput {
+  downPaymentPercentage: Float!
+  schedulerType: SchedularType!
+}
+
+type PlanPayLoad {
+  plan: Plan
+  errors: [Error!]
+  isSuccess: Boolean!
+}
+
+input UpdateBookingInput {
+  id: UUID!
+  discount: Decimal!
+  bookingDate: DateTime!
+  bookingType: BookingType!
+  authorizedDealer: String!
+  rebate: Decimal!
+  amountScheduled: AmountScheduledType!
+  possession: Decimal!
+  possessionDate: DateTime
+  downPayment: Decimal!
+  downPayDate: DateTime!
+  perInstallment: Decimal!
+  annualInstallment: Decimal!
+  remainingAmountAdjustment: RemainingAmountAdjustment!
+}
+
+input CreateBookingInput {
+  discount: Decimal!
+  bookingDate: DateTime!
+  bookingType: BookingType!
+  dealerId: UUID!
+  customerId: UUID!
+  unitId: UUID!
+  schedularType: SchedularType!
+  paymentHeadCode: String!
+  rebate: Decimal!
+  amountScheduled: AmountScheduledType!
+  startDate: DateTime!
+  authorizedDealer: String!
+  possession: Decimal!
+  possessionDate: DateTime
+  downPayment: Decimal!
+  downPayDate: DateTime!
+  perInstallment: Decimal!
+  annualInstallment: Decimal!
+  remainingAmountAdjustment: RemainingAmountAdjustment!
+}
+
+type BookingPayload {
+  booking: Booking
+  errors: [Error!]
+  isSuccess: Boolean!
+}
+
+input UpdateUnitInput {
+  id: UUID!
+  unitType: UnitType!
+  size: Long!
+  dimension: String!
+  totalAmount: Decimal!
+  category: Category!
+  netAmount: String
+  description: String
+  status: Status!
+}
+
+input CreateUnitInput {
+  unitType: UnitType!
+  size: Long!
+  dimension: String!
+  totalAmount: Decimal!
+  category: Category!
+  netAmount: String
+  description: String
+  status: Status!
+}
+
+type UnitPayload {
+  unit: Unit
+  errors: [Error!]
+  isSuccess: Boolean!
+}
+
+input TransactionInput {
+  accountId: UUID!
+  description: String
+  type: TransactionType!
+  amount: Decimal!
+  sortOrder: Int
+}
+
+input AddressInput {
+  country: String!
+  city: String!
+  addressLine: String
+}
+
+type Error {
+  message: String!
+  code: String!
+}
+
+type SecondLevelAccount {
+  thirdLevelAccount(thirdLevelAccountId: UUID!): ThirdLevelAccount!
+  maxCodeNumber: Int!
+  events: [IEvent!]!
+  firstLevelAccountId: UUID!
+  firstLevelAccount: FirstLevelAccount!
+  thirdLevelAccounts: [ThirdLevelAccount!]!
+  name: String!
+  code: String!
+  description: String
+  roles: [Role!]!
+  sortOrder: Int!
+  createdOn: DateTime!
+  createdBy: UUID
+  updatedOn: DateTime
+  updatedBy: UUID
+  tenantId: UUID!
+  isDeleted: Boolean!
+  deletedOn: DateTime
+  id: UUID!
+}
+
+type FirstLevelAccount {
+  events: [IEvent!]!
+  secondLevelAccounts: [SecondLevelAccount!]!
+  name: String!
+  code: String!
+  description: String
+  roles: [Role!]!
+  sortOrder: Int!
+  createdOn: DateTime!
+  createdBy: UUID
+  updatedOn: DateTime
+  updatedBy: UUID
+  tenantId: UUID!
+  isDeleted: Boolean!
+  deletedOn: DateTime
+  id: UUID!
+}

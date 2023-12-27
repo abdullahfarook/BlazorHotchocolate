@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "metaphor.strawberryshake.tools":{
+      "version": "0.0.10-dev",
+      "commands": [
+        "dotnet-graphql"
+      ]
+    }
+  }
+}
