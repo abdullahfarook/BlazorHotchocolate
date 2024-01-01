@@ -1,0 +1,36 @@
+﻿@using BlazorHotchocolate.Models
+@using System.Reactive.Subjects
+@using System.Reactive.Linq
+
+<h1>Infinite scrolling!</h1>
+
+<InfiniteScroll ItemsProvider="Items0" OnNext="GetItems">
+    <ItemTemplate Context="item">
+        <div>Item @item</div>
+    </ItemTemplate>
+    <LoadingTemplate>
+        <div><span class="oi oi-reload spin"></span> Loading more items...</div>
+    </LoadingTemplate>
+</InfiniteScroll>
+
+@code {
+    
+    private BehaviorSubject<List<int>> ItemsSub = new([]);
+    private IObservable<List<int>> Items0 => ItemsSub.AsObservable();
+    // protected override void OnInitialized()
+    // {
+    //     Fetch(0, 20);
+    //     base.OnInitialized();
+    // }
+
+    async Task GetItems(InfiniteScrollingItemsProviderRequest request)
+    {
+        await Task.Delay(500);
+        Fetch(request.StartIndex, ItemsSub.Value.Count + 10) ;
+    }
+    private void Fetch(int startIndex, int count)
+    {
+        var items = Enumerable.Range(startIndex, count);
+        ItemsSub.OnNext(items.ToList());
+    }
+}

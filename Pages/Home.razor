@@ -1,17 +1,22 @@
 ﻿@page "/"
+@using System.Reactive.Linq
 
 <PageTitle>Home</PageTitle>
-<UseGetDealers Context="result">
-    <ChildContent>
-        @{
-            var data = result.Dealers!.Nodes;
+@* <UseGetDealers Name="@MainLayout.filter" Strategy="ExecutionStrategy.CacheFirst" > *@
+@*     <ChildContent> *@
+        @* @{ *@
+        @*     var data = context.Dealers!.Nodes!; *@
+        @* } *@
+        @if (loading)
+        {
+            <span>Loading...</span>
         }
         @if (data!.Any())
         {
             <ul>
-                @foreach (var item in result.Dealers!.Nodes!)
+                @foreach (var item in data)
                 {
-                    <li>@item.Name (@item.Id)</li>
+                    <li>@item.Name (@item.Id) <button @onclick="()=> Edit(item)">Edit</button></li>
                 }
             </ul>
         }
@@ -20,12 +25,188 @@
             <p>No data</p>
         }
        
-    </ChildContent>
-    <ErrorContent>
-        Something went wrong ...<br />
-        @result.First().Message
-    </ErrorContent>
-    <LoadingContent>
-        Loading ...
-    </LoadingContent>
-</UseGetDealers>
+@*     </ChildContent> *@
+@*     <ErrorContent> *@
+@*         Something went wrong ...<br /> *@
+@*         @context.First().Message *@
+@*     </ErrorContent> *@
+@*     <LoadingContent> *@
+@*         Loading ... *@
+@*     </LoadingContent> *@
+@* </UseGetDealers> *@
+<div>
+    <button disabled="@(!hasPreviousPage)" @onclick="()=> OnPrevious()">Previous</button>
+    <span>@index</span>
+    <button disabled="@(!hasNextPage)" @onclick="()=> OnNext()">Next</button>
+</div>
+
+<div style="margin-top: 5px">
+    <Demo></Demo>
+</div>
+@code{
+    [Inject] IRedApi RedApi { get; set; }
+    IDealer[] data = [];
+    DealerFilterInput filter = new()
+    {
+        Name = new StringOperationFilterInput()
+        {
+            Contains = "e"
+        }
+    };
+    int index = 0;
+    int? first = 10;
+    int? last = null;
+    string? after = null;
+    string? before = null;
+    string? startCursor = null;
+    string? endCursor = null;
+    bool hasNextPage = false;
+    bool hasPreviousPage = false;
+    bool loading = true;
+    // string filter = "a";
+    //
+    /// <summary>
+    /// Information about pagination in a connection.
+    /// </summary>
+    // [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "13.8.1.0")]
+    // public partial interface IGetPaginatedDealers_Dealers_PageInfo
+    // {
+    //     /// <summary>
+    //     /// Indicates whether more edges exist following the set defined by the clients arguments.
+    //     /// </summary>
+    //     public global::System.Boolean HasNextPage { get; }
+    //
+    //     /// <summary>
+    //     /// Indicates whether more edges exist prior the set defined by the clients arguments.
+    //     /// </summary>
+    //     public global::System.Boolean HasPreviousPage { get; }
+    //
+    //     /// <summary>
+    //     /// When paginating backwards, the cursor to continue.
+    //     /// </summary>
+    //     public global::System.String? StartCursor { get; }
+    //
+    //     /// <summary>
+    //     /// When paginating forwards, the cursor to continue.
+    //     /// </summary>
+    //     public global::System.String? EndCursor { get; }
+    // }
+    //global::System.IObservable<global::StrawberryShake.IOperationResult<IGetPaginatedDealersResult>> Watch(global::BlazorHotchocolate.DealerFilterInput? filter, global::System.Int32? first, global::System.Int32? last, global::System.String? after, global::System.String? before, global::StrawberryShake.ExecutionStrategy? strategy = null);
+
+    protected override async Task OnInitializedAsync()
+    {
+         // filter.Name.Contains = MainLayout.filter;
+    
+    // random from a to z
+    if(MainLayout.filter == "z")
+    {
+        MainLayout.filter = "a";
+    }
+    else if(MainLayout.filter == "a")
+    {
+        MainLayout.filter = "z";
+    }
+    
+    FetchData();
+    
+    }
+    private void FetchData()
+    {
+        loading = true;
+        // implement pagination
+        var result = RedApi.GetPaginatedDealers.Watch(filter, first, last, after, before).Subscribe(result =>
+        {
+            // Update the data variable with the new data
+            data = result.Data!.Dealers!.Nodes!.ToArray();
+            var pageInfo = result.Data!.Dealers!.PageInfo;
+            startCursor = pageInfo!.StartCursor;
+            endCursor = pageInfo!.EndCursor;
+            hasNextPage = pageInfo!.HasNextPage;
+            hasPreviousPage = pageInfo!.HasPreviousPage;
+            loading = false;
+
+            // Refresh the UI
+            StateHasChanged();
+        });
+    }
+    private void OnNext()
+    {
+        // implement next
+        // Get the endCursor from the current page data
+        if(hasNextPage == false) return;
+        string? endCursor = this.endCursor;
+
+        // Set the after parameter to the endCursor
+        after = endCursor;
+        before = null;
+        first = 10;
+        last = null;
+
+        FetchData();
+
+    }
+    private void OnPrevious()
+    {
+        if(hasPreviousPage == false) return;
+        // implement previous
+        string? startCursor = this.startCursor;
+        
+        // Set the before parameter to the startCursor
+        before = startCursor;
+        after = null;
+        first = null;
+        last = 10;
+        
+        FetchData();
+    }
+
+   
+
+    public async Task Edit(IDealer dealer)
+    {
+        
+        // random data
+        var input = new CreateDealerInput()
+        {
+            Name = "Dealer 1",
+            Type = DealerType.None,
+            Cnic = "1234567890123",
+            IsFiler = true,
+            Ntn = 1234567,
+            Address = new AddressInput()
+            {
+                City = "Lahore",
+                Country = "Pakistan",
+            },
+            Email = "abc@123.com",
+            PhoneNumber = "03006675840",
+            Rebate = "1234567890123"
+        };
+        
+        // map data
+        // random data
+        var random = new Random();
+        var randomString = random.Next(1000, 9999).ToString();
+        var updateDealerInput = new UpdateDealerInput()
+        {
+            Id = dealer.Id,
+            Name = dealer.Name + randomString,
+            Type = dealer.Type,
+            Cnic = dealer.Cnic,
+            IsFiler = dealer.IsFiler,
+            Ntn = dealer.Ntn,
+            Address = new AddressInput()
+            {
+                City = dealer.Address!.City,
+                Country = dealer.Address!.Country,
+            },
+            Email = dealer.Email,
+            PhoneNumber = dealer.PhoneNumber
+        };
+        await RedApi.UpdateDealer.ExecuteAsync(updateDealerInput);
+    }
+
+
+    
+
+}

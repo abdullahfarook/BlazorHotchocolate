@@ -1,16 +1,61 @@
-﻿query GetDealers{
-    dealers{
+﻿
+query GetPaginatedDealers(
+    $filter: DealerFilterInput
+    $first: Int
+    $last: Int
+    $after: String
+    $before: String
+) {
+    dealers(
+        where: $filter
+        first: $first
+        after: $after
+        before: $before
+        last: $last
+    ) {
+        pageInfo {
+            hasNextPage
+            hasPreviousPage
+            startCursor
+            endCursor
+        }
         nodes {
-            id
-            name
+            ...Dealer
         }
     }
 }
+
 mutation CreateDealer($req: CreateDealerInput!) {
     createDealer(request: $req) {
         dealer {
-            id
-            name
+           ...Dealer
         }
     }
+}
+mutation UpdateDealer($req: UpdateDealerInput!) {
+    updateDealer(request: $req) {
+        dealer {
+           ...Dealer
+        }
+    }
+}
+
+fragment Dealer on Dealer {
+    id
+    name
+    cnic
+    code
+    address{
+        ...Address
+    },
+    email
+    isFiler
+    ntn
+    phoneNumber
+    type
+}
+fragment Address on Address{
+    addressLine
+    city
+    country
 }
