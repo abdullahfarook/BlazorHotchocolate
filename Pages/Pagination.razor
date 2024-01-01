@@ -1,0 +1,126 @@
+@using System.Reactive.Linq
+@using System.Reactive.Subjects
+@using BlazorHotchocolate.Models
+
+<ul>
+    <InfiniteScroll ItemsProvider="Items0" OnNext="GetItems">
+        <ItemTemplate Context="item">
+            <li>@item.Name (@item.Id) <button @onclick="() => Edit(item)">Edit</button></li>
+        </ItemTemplate>
+        <LoadingTemplate>
+            <div><span class="oi oi-reload spin"></span> Loading more items...</div>
+        </LoadingTemplate>
+    </InfiniteScroll>
+</ul>
+
+
+@code {
+
+    private Subject<List<IDealer>> ItemsSub = new();
+    private IObservable<List<IDealer>> Items0 => ItemsSub.AsObservable();
+    private int Initial = 0;
+
+    async Task GetItems(InfiniteScrollingItemsProviderRequest request)
+    {
+        await Task.Delay(2000);
+        OnNext();
+    }
+    
+    [Inject] IRedApi RedApi { get; set; }
+
+    IDealer[] data = {
+    };
+
+    DealerFilterInput filter = new() {
+    // Name = new StringOperationFilterInput() {
+    //     Contains = "e"
+    // }
+    };
+
+    int index = 0;
+    int? first = 10;
+    int? last = null;
+    string? after = null;
+    string? before = null;
+    string? startCursor = null;
+    string? endCursor = null;
+    bool hasNextPage = false;
+    bool hasPreviousPage = false;
+    bool loading = true;
+    private void FetchData()
+    {
+        loading = true;
+    // implement pagination
+        var result = RedApi.GetPaginatedDealers.Watch(filter, first, last, after, before).Subscribe(result => {
+    // Update the data variable with the new data
+            data = result.Data!.Dealers!.Nodes!.ToArray();
+            ItemsSub.OnNext(data.ToList());
+            var pageInfo = result.Data!.Dealers!.PageInfo;
+            startCursor = pageInfo!.StartCursor;
+            endCursor = pageInfo!.EndCursor;
+            hasNextPage = pageInfo!.HasNextPage;
+            hasPreviousPage = pageInfo!.HasPreviousPage;
+            loading = false;
+
+    // Refresh the UI
+            StateHasChanged();
+        });
+    }
+    private void OnNext()
+    {
+    // implement next
+    // Get the endCursor from the current page data
+        if (hasNextPage == false){
+            data = Array.Empty<IDealer>();
+        };
+        string? endCursor = this.endCursor;
+
+    // Set the after parameter to the endCursor
+        after = endCursor;
+        before = null;
+        first = 10;
+        last = null;
+
+        FetchData();
+
+    }
+    private void OnPrevious()
+    {
+        if (hasPreviousPage == false) return;
+    // implement previous
+        string? startCursor = this.startCursor;
+
+    // Set the before parameter to the startCursor
+        before = startCursor;
+        after = null;
+        first = null;
+        last = 10;
+
+        FetchData();
+    }
+
+
+    public async Task Edit(IDealer dealer)
+    {
+
+
+        var random = new Random();
+        var randomString = random.Next(1000, 9999).ToString();
+        var updateDealerInput = new UpdateDealerInput() {
+            Id = dealer.Id,
+            Name = dealer.Name + randomString,
+            Type = dealer.Type,
+            Cnic = dealer.Cnic,
+            IsFiler = dealer.IsFiler,
+            Ntn = dealer.Ntn,
+            Address = new AddressInput() {
+                City = dealer.Address!.City,
+                Country = dealer.Address!.Country,
+            },
+            Email = dealer.Email,
+            PhoneNumber = dealer.PhoneNumber
+        };
+        await RedApi.UpdateDealer.ExecuteAsync(updateDealerInput);
+    }
+
+}

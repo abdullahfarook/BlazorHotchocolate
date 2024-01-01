@@ -2,28 +2,31 @@
 @using System.Reactive.Linq
 
 <PageTitle>Home</PageTitle>
+
+
+
 @* <UseGetDealers Name="@MainLayout.filter" Strategy="ExecutionStrategy.CacheFirst" > *@
 @*     <ChildContent> *@
         @* @{ *@
         @*     var data = context.Dealers!.Nodes!; *@
         @* } *@
-        @if (loading)
-        {
-            <span>Loading...</span>
-        }
-        @if (data!.Any())
-        {
-            <ul>
-                @foreach (var item in data)
-                {
-                    <li>@item.Name (@item.Id) <button @onclick="()=> Edit(item)">Edit</button></li>
-                }
-            </ul>
-        }
-        else
-        {
-            <p>No data</p>
-        }
+        @* @if (loading) *@
+        @* { *@
+        @*     <span>Loading...</span> *@
+        @* } *@
+        @* @if (data!.Any()) *@
+        @* { *@
+        @*     <ul> *@
+        @*         @foreach (var item in data) *@
+        @*         { *@
+        @*             <li>@item.Name (@item.Id) <button @onclick="()=> Edit(item)">Edit</button></li> *@
+        @*         } *@
+        @*     </ul> *@
+        @* } *@
+        @* else *@
+        @* { *@
+        @*     <p>No data</p> *@
+        @* } *@
        
 @*     </ChildContent> *@
 @*     <ErrorContent> *@
@@ -34,10 +37,13 @@
 @*         Loading ... *@
 @*     </LoadingContent> *@
 @* </UseGetDealers> *@
-<div>
-    <button disabled="@(!hasPreviousPage)" @onclick="()=> OnPrevious()">Previous</button>
-    <span>@index</span>
-    <button disabled="@(!hasNextPage)" @onclick="()=> OnNext()">Next</button>
+@* <div> *@
+@*     <button disabled="@(!hasPreviousPage)" @onclick="()=> OnPrevious()">Previous</button> *@
+@*     <span>@index</span> *@
+@*     <button disabled="@(!hasNextPage)" @onclick="()=> OnNext()">Next</button> *@
+@* </div> *@
+<div style="margin-top: 5px">
+    <Pagination></Pagination>
 </div>
 
 <div style="margin-top: 5px">

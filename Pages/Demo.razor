@@ -26,7 +26,7 @@
 
     async Task GetItems(InfiniteScrollingItemsProviderRequest request)
     {
-        await Task.Delay(500);
+        await Task.Delay(2000);
         Initial += 10;
         Fetch(request.StartIndex, Initial) ;
     }
