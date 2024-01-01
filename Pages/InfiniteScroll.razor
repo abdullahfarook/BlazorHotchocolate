@@ -124,14 +124,14 @@
         ItemsProvider.Subscribe(async newItems =>
         {
             var length = _items.Count;
-            _items.AddRange(newItems);
-
-            if (_items.Count == length)
+            var newLength = length+newItems.Count;
+            if (newLength == length)
             {
                 _enumerationCompleted = true;
             }
-            else
+            else if(_enumerationCompleted == false)
             {
+                _items.AddRange(newItems);
                 System.Diagnostics.Debug.Assert(_instance != null);
                 await _instance.InvokeVoidAsync("onNewItems");
             }
@@ -184,7 +184,7 @@
     {
         // This is the last element, so let's use a huge value
         __builder.OpenElement(1000, LastItemIndicatorElement);
-        var style = _enumerationCompleted ? "height:0;width:0" : "height:1px;width:1px;flex-shrink:0";
+        var style = _enumerationCompleted ? "display:none" : "display:block;";
         __builder.AddAttribute(1001, "style", style);
         __builder.AddElementReferenceCapture(1002, element => _lastItemIndicator = element);
         __builder.CloseElement();

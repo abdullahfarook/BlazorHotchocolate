@@ -15,8 +15,9 @@
 
 @code {
     
-    private BehaviorSubject<List<int>> ItemsSub = new([]);
+    private Subject<List<int>> ItemsSub = new();
     private IObservable<List<int>> Items0 => ItemsSub.AsObservable();
+    private int Initial = 0;
     // protected override void OnInitialized()
     // {
     //     Fetch(0, 20);
@@ -26,11 +27,13 @@
     async Task GetItems(InfiniteScrollingItemsProviderRequest request)
     {
         await Task.Delay(500);
-        Fetch(request.StartIndex, ItemsSub.Value.Count + 10) ;
+        Initial += 10;
+        Fetch(request.StartIndex, Initial) ;
     }
     private void Fetch(int startIndex, int count)
     {
         var items = Enumerable.Range(startIndex, count);
+        if(items.Contains(100))  ItemsSub.OnNext([]);;
         ItemsSub.OnNext(items.ToList());
     }
 }
