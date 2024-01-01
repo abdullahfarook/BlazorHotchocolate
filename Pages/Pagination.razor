@@ -51,7 +51,7 @@
     {
         loading = true;
     // implement pagination
-        var result = RedApi.GetPaginatedDealers.Watch(filter, first, last, after, before).Subscribe(result => {
+        var result = RedApi.GetPaginatedDealers.Watch(filter, first, last, after, before).FirstAsync().Subscribe(result => {
     // Update the data variable with the new data
             data = result.Data!.Dealers!.Nodes!.ToArray();
             ItemsSub.OnNext(data.ToList());
