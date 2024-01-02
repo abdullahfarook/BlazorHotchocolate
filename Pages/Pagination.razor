@@ -1,17 +1,16 @@
 @using System.Reactive.Linq
 @using System.Reactive.Subjects
 @using BlazorHotchocolate.Models
-
-<ul>
-    <InfiniteScroll ItemsProvider="Items0" OnNext="GetItems">
-        <ItemTemplate Context="item">
-            <li>@item.Name (@item.Id) <button @onclick="() => Edit(item)">Edit</button></li>
-        </ItemTemplate>
-        <LoadingTemplate>
-            <div><span class="oi oi-reload spin"></span> Loading more items...</div>
-        </LoadingTemplate>
-    </InfiniteScroll>
-</ul>
+   <ul>
+       <InfiniteScroll ItemsProvider="Items0" OnNext="GetItems">
+           <ItemTemplate Context="item">
+               <li>@item.Name (@item.Id) <button @onclick="() => Edit(item)">Edit</button></li>
+           </ItemTemplate>
+           <LoadingTemplate>
+               <div><span class="oi oi-reload spin"></span> Loading more items...</div>
+           </LoadingTemplate>
+       </InfiniteScroll>
+   </ul> 
 
 
 @code {
@@ -47,11 +46,13 @@
     bool hasNextPage = false;
     bool hasPreviousPage = false;
     bool loading = true;
+    IDisposable? Subscription;
     private void FetchData()
     {
         loading = true;
     // implement pagination
-        var result = RedApi.GetPaginatedDealers.Watch(filter, first, last, after, before).FirstAsync().Subscribe(result => {
+        Subscription?.Dispose();
+        Subscription = RedApi.GetPaginatedDealers.Watch(filter, first, last, after, before).Subscribe(result => {
     // Update the data variable with the new data
             data = result.Data!.Dealers!.Nodes!.ToArray();
             ItemsSub.OnNext(data.ToList());
@@ -80,7 +81,6 @@
         before = null;
         first = 10;
         last = null;
-
         FetchData();
 
     }
