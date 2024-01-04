@@ -1,6 +1,7 @@
 @using System.Reactive.Linq
 @using System.Reactive.Subjects
 @using BlazorHotchocolate.Models
+@using System.Reactive.Threading.Tasks
    <ul>
        <InfiniteScroll ItemsProvider="Items0" OnNext="GetItems">
            <ItemTemplate Context="item">
@@ -19,10 +20,10 @@
     private IObservable<List<IDealer>> Items0 => ItemsSub.AsObservable();
     private int Initial = 0;
 
-    async Task GetItems(InfiniteScrollingItemsProviderRequest request)
+    Task GetItems(InfiniteScrollingItemsProviderRequest request)
     {
-        await Task.Delay(2000);
-        OnNext();
+        // await Task.Delay(2000);
+        return OnNext();
     }
     
     [Inject] IRedApi RedApi { get; set; }
@@ -35,9 +36,9 @@
     //     Contains = "e"
     // }
     };
-
+    int pageSize = 15;
     int index = 0;
-    int? first = 10;
+    int? first = 0;
     int? last = null;
     string? after = null;
     string? before = null;
@@ -47,13 +48,9 @@
     bool hasPreviousPage = false;
     bool loading = true;
     IDisposable? Subscription;
-    private void FetchData()
+    private async Task FetchData()
     {
-        loading = true;
-    // implement pagination
-        Subscription?.Dispose();
-        Subscription = RedApi.GetPaginatedDealers.Watch(filter, first, last, after, before).Subscribe(result => {
-    // Update the data variable with the new data
+       var result = await RedApi.GetPaginatedDealers.Watch(filter, first, last, after, before).FirstAsync();
             data = result.Data!.Dealers!.Nodes!.ToArray();
             ItemsSub.OnNext(data.ToList());
             var pageInfo = result.Data!.Dealers!.PageInfo;
@@ -61,13 +58,9 @@
             endCursor = pageInfo!.EndCursor;
             hasNextPage = pageInfo!.HasNextPage;
             hasPreviousPage = pageInfo!.HasPreviousPage;
-            loading = false;
-
-    // Refresh the UI
             StateHasChanged();
-        });
     }
-    private void OnNext()
+    private async Task OnNext()
     {
     // implement next
     // Get the endCursor from the current page data
@@ -79,9 +72,9 @@
     // Set the after parameter to the endCursor
         after = endCursor;
         before = null;
-        first = 10;
+        first = pageSize;
         last = null;
-        FetchData();
+        await FetchData();
 
     }
     private void OnPrevious()
@@ -94,7 +87,7 @@
         before = startCursor;
         after = null;
         first = null;
-        last = 10;
+        last = pageSize;
 
         FetchData();
     }

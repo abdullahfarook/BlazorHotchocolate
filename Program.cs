@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using BlazorHotchocolate;
+using Microsoft.FluentUI.AspNetCore.Components;
 using StrawberryShake;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -12,5 +13,5 @@ builder.Services.AddRedApi(ExecutionStrategy.CacheFirst).ConfigureHttpClient(cli
 {
     client.BaseAddress = new Uri("https://api-red.metaphorltd.com/graphql");
 });
-
+builder.Services.AddFluentUIComponents();
 await builder.Build().RunAsync();

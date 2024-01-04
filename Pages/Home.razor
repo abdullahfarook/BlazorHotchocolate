@@ -2,7 +2,7 @@
 @using System.Reactive.Linq
 
 <PageTitle>Home</PageTitle>
-
+<Search/>
 
 
 @* <UseGetDealers Name="@MainLayout.filter" Strategy="ExecutionStrategy.CacheFirst" > *@
@@ -46,12 +46,12 @@
     <Pagination></Pagination>
 </div>
 
-<div style="margin-top: 5px">
+@* <div style="margin-top: 5px">
     <Demo></Demo>
-</div>
+</div> *@
 @code{
     [Inject] IRedApi RedApi { get; set; }
-    IDealer[] data = [];
+    IDealer[] data = {};
     DealerFilterInput filter = new()
     {
         Name = new StringOperationFilterInput()
