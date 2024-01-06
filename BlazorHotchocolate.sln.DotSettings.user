@@ -1,0 +1,10 @@
+﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<s:Boolean x:Key="/Default/AddReferences/RecentPaths/=C_003A_005Crepos_005Cfluentui_002Dblazor_005Cartifacts_005CMicrosoft_002EFluentUI_002EAspNetCore_002EComponents_002E4_002E3_002E0_002Enupkg/@EntryIndexedValue">True</s:Boolean>
+	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=944C2692_002D19D2_002D49C7_002D87DD_002D49575CCE535A_002Fd_003ACore_002Ff_003ARfSearch_002Erazor_002Ecs/@EntryIndexedValue">ExplicitlyExcluded</s:String>
+	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=944C2692_002D19D2_002D49C7_002D87DD_002D49575CCE535A_002Fd_003ACore_002Ff_003ARfSearch_002Erazor/@EntryIndexedValue">ExplicitlyExcluded</s:String>
+	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=944C2692_002D19D2_002D49C7_002D87DD_002D49575CCE535A_002Fd_003APages_002Ff_003ASearch_002Erazor/@EntryIndexedValue">ExplicitlyExcluded</s:String>
+	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=944C2692_002D19D2_002D49C7_002D87DD_002D49575CCE535A_002Ff_003A_005FImports_002Erazor/@EntryIndexedValue">ExplicitlyExcluded</s:String>
+	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=944C2692_002D19D2_002D49C7_002D87DD_002D49575CCE535A_002Ff_003Anuget_002Econfig/@EntryIndexedValue">ExplicitlyExcluded</s:String>
+	
+	
+	</wpf:ResourceDictionary>

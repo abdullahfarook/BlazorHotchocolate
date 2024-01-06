@@ -1,4 +1,4 @@
-﻿<FluentAutocomplete Id="my-customized"
+﻿<RfSearch Id="my-customized"
                     @ref="ContactList"
                     TOption="Person"
                     Width="100%"
@@ -56,7 +56,7 @@
             </FluentLabel>
         }
     </FooterContent>
-</FluentAutocomplete>
+</RfSearch>
 
 <p>
     <b>Selected</b>: @(String.Join(" - ", SelectedItems.Select(i => i.LastName)))
@@ -79,7 +79,7 @@
       new Person("Sophia", "Thomas", "https://randomuser.me/api/portraits/women/4.jpg"),
       new Person("Matthew", "Martinez", "https://randomuser.me/api/portraits/men/6.jpg"),
     };
-    FluentAutocomplete<Person> ContactList = default!;
+    RfSearch<Person> ContactList = default!;
     IEnumerable<Person> SelectedItems = Array.Empty<Person>();
 
     private void OnSearch(OptionsSearchEventArgs<Person> e)

@@ -1,4 +1,4 @@
-﻿﻿using System.ComponentModel;
+﻿using System.ComponentModel;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.FluentUI.AspNetCore.Components.Utilities;
@@ -7,7 +7,9 @@ using Microsoft.JSInterop;
 
 namespace BlazorHotchocolate.Core;
 [CascadingTypeParameter(nameof(TOption))]
-public partial class RfSearch<TOption> : ListComponentBase<TOption> where TOption : notnull
+public partial class RfSearch<TOption> : ListComponentBase<TOption>
+    ,IListComponent 
+    where TOption : notnull
 {
 
     private string _valueText = string.Empty;
