@@ -1,4 +1,4 @@
-﻿namespace BlazorHotchocolate.Models;
+﻿namespace BlazorHotchocolate.Core;
 
 public sealed class InfiniteScrollingItemsProviderRequest
 {
@@ -9,5 +9,6 @@ public sealed class InfiniteScrollingItemsProviderRequest
     }
 
     public int StartIndex { get; }
+
     public CancellationToken CancellationToken { get; }
 }

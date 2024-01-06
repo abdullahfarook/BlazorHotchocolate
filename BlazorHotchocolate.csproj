@@ -19,4 +19,8 @@
       <ProjectReference Include="..\..\..\..\repos\fluentui-blazor\src\Core\Microsoft.FluentUI.AspNetCore.Components.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="Core\InfiniteScrolling\InfiniteScroll2.razor" />
+    </ItemGroup>
+
 </Project>

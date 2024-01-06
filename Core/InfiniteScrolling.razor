@@ -1,48 +1,43 @@
 ﻿@using System.Threading
 @using Microsoft.AspNetCore.Components.Rendering;
+@using Microsoft.JSInterop
 @typeparam T
 @inject IJSRuntime JSRuntime
 @implements IAsyncDisposable
-
 <div style="height:300px;overflow-y:scroll">
-    <Virtualize Items="@_items" Context="item">
+    <Virtualize Items="@_items"
+                Context="item">
         @if (ItemTemplate != null)
-           {
-               @ItemTemplate(item)
-           }
+        {
+            @ItemTemplate(item)
+        }
     </Virtualize>
+    @if (IsLoading)
+    {
+        @LoadingTemplate
+    }
 
-@* @foreach (var item in _items) *@
-@* { *@
-@*     @if (ItemTemplate != null) *@
-@*     { *@
-@*         @ItemTemplate(item) *@
-@*     } *@
-@* } *@
-@if (IsLoading)
-{
-    @LoadingTemplate
-}
+    @RenderLastElement
 
-@RenderLastElement
 </div>
+
 @code {
     private List<T> _items = new();
     private ElementReference _lastItemIndicator;
-    private DotNetObjectReference<InfiniteScroll<T>>? _currentComponentReference;
+    private DotNetObjectReference<InfiniteScrolling<T>> _currentComponentReference;
     private IJSObjectReference? _module;
     private IJSObjectReference? _instance;
     private bool _enumerationCompleted;
     private CancellationTokenSource? _loadItemsCts;
+    private InfiniteScrollingItemsProviderRequestDelegate<T>? _itemsProvider;
 
-    private bool IsLoading = true;
+    private bool IsLoading => _loadItemsCts != null;
 
+    [Parameter] public InfiniteScrollingItemsProviderRequestDelegate<T>? ItemsProvider { get; set; }
 
-    [Parameter]
-    public RenderFragment<T>? ItemTemplate { get; set; }
+    [Parameter] public RenderFragment<T>? ItemTemplate { get; set; }
 
-    [Parameter]
-    public RenderFragment? LoadingTemplate { get; set; }
+    [Parameter] public RenderFragment? LoadingTemplate { get; set; }
 
     /// <summary>
     /// Gets or sets the tag name of the HTML element that will be used as the virtualization spacer.
@@ -55,14 +50,6 @@
     /// </summary>
     [Parameter]
     public string LastItemIndicatorElement { get; set; } = "div";
-    
-    [Parameter]
-    public IObservable<List<T>> ItemsProvider { get; set; }
-    
-    private IObservable<List<T>> _itemsProvider;
-    bool isInitialized = false;
-    [Parameter]
-    public EventCallback<InfiniteScrollingItemsProviderRequest> OnNext { get; set; }
 
     [JSInvokable]
     public async Task LoadMoreItems()
@@ -74,7 +61,6 @@
             return;
 
         var items = _items;
-        IsLoading = true;
         var cts = new CancellationTokenSource();
         _loadItemsCts = cts;
         try
@@ -82,7 +68,22 @@
             StateHasChanged(); // Allow the UI to display the loading indicator
             try
             {
-                await OnNext.InvokeAsync(new InfiniteScrollingItemsProviderRequest(items.Count, cts.Token));
+                var newItems = await ItemsProvider(new InfiniteScrollingItemsProviderRequest(items.Count, cts.Token));
+                if (!cts.IsCancellationRequested)
+                {
+                    var length = items.Count;
+                    items.AddRange(newItems);
+
+                    if (items.Count == length)
+                    {
+                        _enumerationCompleted = true;
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.Assert(_instance != null);
+                        await _instance.InvokeVoidAsync("onNewItems");
+                    }
+                }
             }
             catch (OperationCanceledException oce) when (oce.CancellationToken == cts.Token)
             {
@@ -91,8 +92,8 @@
         }
         finally
         {
-            // _loadItemsCts = null;
-            // cts.Dispose();
+            _loadItemsCts = null;
+            cts.Dispose();
         }
 
         StateHasChanged(); // Display the new items and hide the loading indicator
@@ -111,36 +112,15 @@
     protected override void OnParametersSet()
     {
         base.OnParametersSet();
+
         // Clear items when the provider changed
-        // if (ItemsProvider != _itemsProvider)
-        // {
-        //     _items = new List<T>();
-        //     _enumerationCompleted = false;
-        // }
-        //
-        // _itemsProvider = ItemsProvider;
-        if(isInitialized) return;
-        ItemsProvider.Subscribe(async newItems =>
+        if (ItemsProvider != _itemsProvider)
         {
-            var length = _items.Count;
-            var newLength = length+newItems.Count;
-            if (newLength == length)
-            {
-                _enumerationCompleted = true;
-            }
-            else if(_enumerationCompleted == false)
-            {
-                _items.AddRange(newItems);
-                System.Diagnostics.Debug.Assert(_instance != null);
-                await _instance.InvokeVoidAsync("onNewItems");
-            }
-            IsLoading = false;
-            _loadItemsCts?.Dispose();
-            _loadItemsCts = null; 
-            await InvokeAsync(StateHasChanged);
-        });
-        isInitialized = true;
-        base.OnParametersSet();
+            _items = new List<T>();
+            _enumerationCompleted = false;
+        }
+
+        _itemsProvider = ItemsProvider;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -183,9 +163,10 @@
     {
         // This is the last element, so let's use a huge value
         __builder.OpenElement(1000, LastItemIndicatorElement);
-        var style = _enumerationCompleted ? "display:none" : "display:block;";
+        var style = _enumerationCompleted ? "height:0;width:0" : "height:1px;width:1px;flex-shrink:0";
         __builder.AddAttribute(1001, "style", style);
         __builder.AddElementReferenceCapture(1002, element => _lastItemIndicator = element);
         __builder.CloseElement();
     }
+
 }

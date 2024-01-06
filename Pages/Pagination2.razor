@@ -1,18 +1,16 @@
-@using System.Reactive.Linq
+﻿@using System.Reactive.Linq
 @using System.Reactive.Subjects
 @using System.Reactive.Threading.Tasks
-   <ul>
-       <InfiniteScroll ItemsProvider="Items0" OnNext="GetItems">
-           <ItemTemplate Context="item">
-               <li>@item.Name (@item.Id) <button @onclick="() => Edit(item)">Edit</button></li>
-           </ItemTemplate>
-           <LoadingTemplate>
-               <div><span class="oi oi-reload spin"></span> Loading more items...</div>
-           </LoadingTemplate>
-       </InfiniteScroll>
-   </ul> 
-
-
+<ul>
+          <InfiniteScrolling ItemsProvider="ItemsProvider">
+              <ItemTemplate Context="item">
+                  <li>@item.Name (@item.Id) <button @onclick="() => Edit(item)">Edit</button></li>
+              </ItemTemplate>
+              <LoadingTemplate>
+                  <div><span class="oi oi-reload spin"></span> Loading more items...</div>
+              </LoadingTemplate>
+          </InfiniteScrolling>
+      </ul> 
 @code {
 
     private Subject<List<IDealer>> ItemsSub = new();
@@ -35,7 +33,7 @@
     //     Contains = "e"
     // }
     };
-    int pageSize = 15;
+    int pageSize = 5;
     int index = 0;
     int? first = 0;
     int? last = null;
@@ -47,7 +45,7 @@
     bool hasPreviousPage = false;
     bool loading = true;
     IDisposable? Subscription;
-    private async Task FetchData()
+    private async Task<IEnumerable<IDealer>> FetchData()
     {
        var result = await RedApi.GetPaginatedDealers.Watch(filter, first, last, after, before).FirstAsync();
             data = result.Data!.Dealers!.Nodes!.ToArray();
@@ -58,8 +56,9 @@
             hasNextPage = pageInfo!.HasNextPage;
             hasPreviousPage = pageInfo!.HasPreviousPage;
             StateHasChanged();
+            return data;
     }
-    private async Task OnNext()
+    private async Task<IEnumerable<IDealer>> OnNext()
     {
     // implement next
     // Get the endCursor from the current page data
@@ -73,7 +72,7 @@
         before = null;
         first = pageSize;
         last = null;
-        await FetchData();
+        return await FetchData();
 
     }
     private void OnPrevious()
@@ -113,6 +112,11 @@
             PhoneNumber = dealer.PhoneNumber
         };
         await RedApi.UpdateDealer.ExecuteAsync(updateDealerInput);
+    }
+
+    private Task<IEnumerable<IDealer>> ItemsProvider(InfiniteScrollingItemsProviderRequest context)
+    {
+        return OnNext();
     }
 
 }
