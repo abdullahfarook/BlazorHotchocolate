@@ -1,6 +1,7 @@
-﻿<RfSearch Id="my-customized"
+﻿<RfSelect Id="my-customized"
                     @ref="ContactList"
                     TOption="Person"
+                    Virtualized="false"
                     Width="100%"
                     Placeholder="search"
                     OnOptionsSearch="@OnSearch"
@@ -56,7 +57,7 @@
             </FluentLabel>
         }
     </FooterContent>
-</RfSearch>
+</RfSelect>
 
 <p>
     <b>Selected</b>: @(String.Join(" - ", SelectedItems.Select(i => i.LastName)))
@@ -79,7 +80,7 @@
       new Person("Sophia", "Thomas", "https://randomuser.me/api/portraits/women/4.jpg"),
       new Person("Matthew", "Martinez", "https://randomuser.me/api/portraits/men/6.jpg"),
     };
-    RfSearch<Person> ContactList = default!;
+    RfSelect<Person> ContactList = default!;
     IEnumerable<Person> SelectedItems = Array.Empty<Person>();
 
     private void OnSearch(OptionsSearchEventArgs<Person> e)

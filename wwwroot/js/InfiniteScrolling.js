@@ -1,11 +1,10 @@
 export function initialize(lastIndicator, instance) {
-    console.log(lastIndicator);
     const options = {
         root: findClosestScrollContainer(lastIndicator),
-        rootMargin: '0px 0px 100px 0px', // Added 100px buffer below to load items before the user reaches the bottom of the page
+        rootMargin: '0px 0px 500px 0px', // Added 100px buffer below to load items before the user reaches the bottom of the page
         threshold: 0,
     };
-    if (isValidTableElement(lastIndicator.parentElement)) {
+    if (isValidTableElement(lastIndicator?.parentElement)) {
         lastIndicator.style.display = 'table-row';
     }
     const observer = new IntersectionObserver(async (entries) => {

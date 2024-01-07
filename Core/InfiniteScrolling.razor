@@ -4,22 +4,19 @@
 @typeparam T
 @inject IJSRuntime JSRuntime
 @implements IAsyncDisposable
-<div style="height:300px;overflow-y:scroll">
-    <Virtualize Items="@_items"
-                Context="item">
-        @if (ItemTemplate != null)
-        {
-            @ItemTemplate(item)
-        }
-    </Virtualize>
-    @if (IsLoading)
+<Virtualize Items="@_items"
+            Context="item">
+    @if (ItemTemplate != null)
     {
-        @LoadingTemplate
+        @ItemTemplate(item)
     }
+</Virtualize>
+@if (IsLoading)
+{
+    @LoadingTemplate
+}
 
-    @RenderLastElement
-
-</div>
+@RenderLastElement
 
 @code {
     private List<T> _items = new();
@@ -32,6 +29,7 @@
     private InfiniteScrollingItemsProviderRequestDelegate<T>? _itemsProvider;
 
     private bool IsLoading => _loadItemsCts != null;
+    
 
     [Parameter] public InfiniteScrollingItemsProviderRequestDelegate<T>? ItemsProvider { get; set; }
 
@@ -50,6 +48,9 @@
     /// </summary>
     [Parameter]
     public string LastItemIndicatorElement { get; set; } = "div";
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object> AdditionalAttributes { get; set; }
 
     [JSInvokable]
     public async Task LoadMoreItems()

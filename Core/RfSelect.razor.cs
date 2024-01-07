@@ -1,13 +1,11 @@
-﻿using System.ComponentModel;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
+﻿using Microsoft.AspNetCore.Components.Web;
 using Microsoft.FluentUI.AspNetCore.Components.Utilities;
 using Microsoft.JSInterop;
 
-
 namespace BlazorHotchocolate.Core;
+
 [CascadingTypeParameter(nameof(TOption))]
-public partial class RfSearch<TOption> : ListComponentBase<TOption>
+public partial class RfSelect<TOption> : ListComponentBase<TOption>
     ,IListComponent 
     where TOption : notnull
 {
@@ -21,7 +19,7 @@ public partial class RfSearch<TOption> : ListComponentBase<TOption>
     /// <summary>
     /// Initializes a new instance of the <see cref="FluentAutocomplete{TOption}"/> class.
     /// </summary>
-    public RfSearch()
+    public RfSelect()
     {
         Multiple = true;
         Width = "100%";
@@ -64,7 +62,7 @@ public partial class RfSearch<TOption> : ListComponentBase<TOption>
     }
 
     /// <summary>
-    /// Gets or sets the visual appearance. See <seealso cref="AspNetCore.Components.Appearance"/>
+    /// Gets or sets the visual appearance. See <seealso cref="Microsoft.FluentUI.AspNetCore.Components.Appearance"/>
     /// </summary>
     [Parameter]
     public FluentInputAppearance Appearance { get; set; } = FluentInputAppearance.Outline;
@@ -145,6 +143,8 @@ public partial class RfSearch<TOption> : ListComponentBase<TOption>
     /// </summary>
     [Parameter]
     public string TitleScrollToNext { get; set; } = "Next";
+    [Parameter] public bool Virtualized { get; set; } = true;
+    [Parameter] public InfiniteScrollingItemsProviderRequestDelegate<TOption>? ItemsProvider { get; set; }
 
     /// <summary />
     private string? ListStyleValue => new StyleBuilder()
@@ -189,6 +189,13 @@ public partial class RfSearch<TOption> : ListComponentBase<TOption>
 
     /// <summary />
     private TOption? SelectableItem { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (Virtualized && ItemsProvider == null)
+            throw new ArgumentNullException(nameof(ItemsProvider));
+        base.OnParametersSet();
+    }
 
     /// <summary />
     protected virtual async Task InputHandlerAsync(ChangeEventArgs e)
