@@ -1,20 +1,78 @@
-﻿@page "/grid"
-<RfDataGrid Items="@people">
-    <PropertyColumn Property="@(p => p.PersonId)" Sortable="true" />
-    <PropertyColumn Property="@(p => p.Name)" Sortable="true" />
-    <PropertyColumn Property="@(p => p.BirthDate)" Format="yyyy-MM-dd" Sortable="true" />
-</RfDataGrid>
+﻿@using Microsoft.FluentUI.AspNetCore.Components
+@page "/grid"
+@inject HttpClient Http
+@inject NavigationManager NavManager
+
+<div style="height: 434px; overflow:auto;" tabindex="-1">
+    <RfDataGrid ItemsProvider="foodRecallProvider" Virtualize="true" ItemSize="46" GenerateHeader="GenerateHeaderOption.Sticky" TGridItem="FoodRecall" >
+        <PropertyColumn Title="ID" Property="@(c => c!.Event_Id)" />
+        <PropertyColumn Property="@(c => c!.State)" Style="color:burlywood" />
+        <PropertyColumn Property="@(c => c!.City)" />
+        <PropertyColumn Title="Company" Property="@(c => c!.Recalling_Firm)" Tooltip="true"/>
+        <PropertyColumn Property="@(c => c!.Status)" />
+        <TemplateColumn Title="Actions" Align="@Align.End">
+            <FluentButton ></FluentButton>
+            <FluentButton  />
+        </TemplateColumn>
+    </RfDataGrid>
+</div>
+
+<p>Total: <strong>@numResults results found</strong></p>
 
 @code {
-    record Person(int PersonId, string Name, DateOnly BirthDate);
 
-    IQueryable<Person> people = new[]
+
+// Represents the data returned by https://open.fda.gov/apis/food/enforcement/
+// This is a subset of the fields available on that API
+    public class FoodRecall
     {
-        new Person(10895, "Jean Martin", new DateOnly(1985, 3, 16)),
-        new Person(10944, "António Langa", new DateOnly(1991, 12, 1)),
-        new Person(11203, "Julie Smith", new DateOnly(1958, 10, 10)),
-        new Person(11205, "Nur Sari", new DateOnly(1922, 4, 27)),
-        new Person(11898, "Jose Hernandez", new DateOnly(2011, 5, 3)),
-        new Person(12130, "Kenji Sato", new DateOnly(2004, 1, 9)),
-    }.AsQueryable();
+        public string Event_Id { get; set; }
+        public string Status { get; set; }
+        public string City { get; set; }
+        public string State { get; set; }
+        public string Recalling_Firm { get; set; }
+    }
+
+    public class FoodRecallQueryResult
+    {
+        public Metadata Meta { get; set; }
+        public FoodRecall[] Results { get; set; }
+
+        public class Metadata
+        {
+            public ResultsInfo Results { get; set; }
+        }
+
+        public class ResultsInfo
+        {
+            public int Total { get; set; }
+        }
+    }
+
+    GridItemsProvider<FoodRecall> foodRecallProvider = default!;
+    int numResults;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Define the GridRowsDataProvider. Its job is to convert QuickGrid's GridRowsDataProviderRequest into a query against
+        // an arbitrary data soure. In this example, we need to translate query parameters into the particular URL format
+        // supported by the external JSON API. It's only possible to perform whatever sorting/filtering/etc is supported
+        // by the external API.
+        foodRecallProvider = async req =>
+        {
+            var url = NavManager.GetUriWithQueryParameters("https://api.fda.gov/food/enforcement.json", new Dictionary<string, object?>
+            {
+                { "skip", req.StartIndex },
+                { "limit", req.Count },
+            });
+
+            var response = await Http.GetFromJsonAsync<FoodRecallQueryResult>(url, req.CancellationToken);
+            return GridItemsProviderResult.From(
+                items: response!.Results,
+                totalItemCount: response!.Meta.Results.Total);
+        };
+
+        // Display the number of results just for information. This is completely separate from the grid.
+        numResults = (await Http.GetFromJsonAsync<FoodRecallQueryResult>("https://api.fda.gov/food/enforcement.json"))!.Meta.Results.Total;
+    }
 }
