@@ -82,7 +82,7 @@
             StateHasChanged(); // Allow the UI to display the loading indicator
             try
             {
-                await OnNext.InvokeAsync(new InfiniteScrollingItemsProviderRequest(items.Count, cts.Token));
+                await OnNext.InvokeAsync(new InfiniteScrollingItemsProviderRequest(items.Count,"", cts.Token));
             }
             catch (OperationCanceledException oce) when (oce.CancellationToken == cts.Token)
             {

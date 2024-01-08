@@ -1,4 +1,5 @@
 ﻿@inherits ListComponentBase<TOption>
+@using Microsoft.AspNetCore.Components.Rendering
 @typeparam TOption
 <CascadingValue Value=@_internalListContext
                 Name="ListContext"
@@ -91,10 +92,11 @@
         </fluent-text-field>
 
         @* List of available items *@
-        @if (IsMultiSelectOpened)
-        {
+        @* @if (IsMultiSelectOpened) *@
+        @* { *@
+        <div style=@(IsMultiSelectOpened? "visibility: initial":"visibility:hidden")>
             <FluentOverlay OnClose="@(e => IsMultiSelectOpened = false)"
-                           Visible="true"
+                           Visible="IsMultiSelectOpened"
                            Transparent="true"
                            FullScreen="true"/>
             <FluentAnchoredRegion Id="@IdPopup"
@@ -143,47 +145,49 @@
                 else
                 {
                     <div role="listbox"
-                         style="@ListStyleValue"
+                            
                          aria-label="List">
                         @{ var selectableItem = GetOptionValue(SelectableItem); }
-                        <InfiniteScrolling ItemsProvider="ItemsProvider">
-                            <ItemTemplate Context="item">
-                                @{ var value = GetOptionValue(item); }
-                                <FluentOption TOption="TOption"
-                                              Value="@value"
-                                              Style="@OptionStyle"
-                                              Class="@OptionClass"
-                                              Selected="@GetOptionSelected(item)"
-                                              Disabled="@(GetOptionDisabled(item) ?? false)"
-                                              OnSelect="@OnSelectCallback(item)"
-                                              selectable="@(value == selectableItem)">
-                                    @if (OptionTemplate == null)
-                                    {
-                                        @GetOptionText(item)
-                                    }
-                                    else
-                                    {
-                                        @OptionTemplate(item)
-                                    }
-                                </FluentOption>
-                            </ItemTemplate>
-                            <LoadingTemplate>
-                                <div><span class="oi oi-reload spin"></span> Loading more items...</div>
-                            </LoadingTemplate>
-                        </InfiniteScrolling>
+                        <Virtualize Items="@_items"
+                                    Context="item">
+                            @{ var value = GetOptionValue(item); }
+                            <FluentOption TOption="TOption"
+                                          Value="@value"
+                                          Style="@OptionStyle"
+                                          Class="@OptionClass"
+                                          Selected="@GetOptionSelected(item)"
+                                          Disabled="@(GetOptionDisabled(item) ?? false)"
+                                          OnSelect="@OnSelectCallback(item)"
+                                          selectable="@(value == selectableItem)">
+                                @if (OptionTemplate == null)
+                                {
+                                    @GetOptionText(item)
+                                }
+                                else
+                                {
+                                    @OptionTemplate(item)
+                                }
+                            </FluentOption>
+                        </Virtualize>
+                        @if (IsLoading)
+                        {
+                            <div><span class="oi oi-reload spin"></span> Loading more items...</div>
+                        }
+                                    
+                        @RenderLastElement
                     </div>
                 }
-
-
                 @if (FooterContent != null)
                 {
                     @FooterContent(Items ?? Array.Empty<TOption>())
                     ;
                 }
             </FluentAnchoredRegion>
-        }
+        </div>
+           
+        @* }*@
         @* Tooltip *@
-        else if (IsReachedMaxItems && MaximumSelectedOptionsMessage != null)
+        @if (IsReachedMaxItems && MaximumSelectedOptionsMessage != null)
         {
             <FluentOverlay OnClose="@(e => IsReachedMaxItems = false)"
                            Visible="true"
@@ -200,3 +204,83 @@
         }
     </div>
 </CascadingValue>
+@code{
+
+    private ElementReference _lastItemIndicator;
+    private DotNetObjectReference<RfSelect<TOption>> _currentComponentReference;
+    private IJSObjectReference? _module;
+    private IJSObjectReference? _instance;
+    private bool _enumerationCompleted;
+    private CancellationTokenSource? _loadItemsCts;
+    private InfiniteScrollingItemsProviderRequestDelegate<TOption>? _itemsProvider;
+    private bool IsLoading => _loadItemsCts != null;
+    [Parameter]
+    public string LastItemIndicatorElement { get; set; } = "div";
+    [JSInvokable]
+    public async Task LoadMoreItems()
+    {
+        if (_loadItemsCts != null)
+            return;
+
+        if (ItemsProvider == null)
+            return;
+
+        var items = _items;
+        var cts = new CancellationTokenSource();
+        _loadItemsCts = cts;
+        try
+        {
+            StateHasChanged(); // Allow the UI to display the loading indicator
+            try
+            {
+                var newItems = await ItemsProvider(new InfiniteScrollingItemsProviderRequest(items.Count, _valueText, cts.Token));
+                if (!cts.IsCancellationRequested)
+                {
+                    var length = items.Count;
+                    items.AddRange(newItems);
+
+                    if (items.Count == length)
+                    {
+                        _enumerationCompleted = true;
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.Assert(_instance != null);
+                        await _instance.InvokeVoidAsync("onNewItems");
+                    }
+                }
+            }
+            catch (OperationCanceledException oce) when (oce.CancellationToken == cts.Token)
+            {
+                // No-op; we canceled the operation, so it's fine to suppress this exception.
+            }
+        }
+        finally
+        {
+            _loadItemsCts = null;
+            cts.Dispose();
+        }
+
+        StateHasChanged(); // Display the new items and hide the loading indicator
+    }
+    
+    public async Task RefreshDataAsync()
+    {
+        _loadItemsCts?.Cancel(); // Will be disposed by the LoadMoreData method
+        _loadItemsCts = null;
+
+        _items = new List<TOption>();
+        _enumerationCompleted = false;
+        await LoadMoreItems();
+    }
+    private void RenderLastElement(RenderTreeBuilder __builder)
+    {
+        // This is the last element, so let's use a huge value
+        __builder.OpenElement(1000, LastItemIndicatorElement);
+        var style = _enumerationCompleted ? "height:0;width:0" : "height:1px;width:1px;flex-shrink:0";
+        __builder.AddAttribute(1001, "style", style);
+        __builder.AddElementReferenceCapture(1002, element => _lastItemIndicator = element);
+        __builder.CloseElement();
+    }
+
+}

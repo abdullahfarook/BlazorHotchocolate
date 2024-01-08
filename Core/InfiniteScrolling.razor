@@ -30,7 +30,7 @@
 
     private bool IsLoading => _loadItemsCts != null;
     
-
+    [Parameter] public IEnumerable<T>? InitialItems { get; set; }
     [Parameter] public InfiniteScrollingItemsProviderRequestDelegate<T>? ItemsProvider { get; set; }
 
     [Parameter] public RenderFragment<T>? ItemTemplate { get; set; }
@@ -54,7 +54,7 @@
 
     [JSInvokable]
     public async Task LoadMoreItems()
-    {
+        {
         if (_loadItemsCts != null)
             return;
 
@@ -69,7 +69,7 @@
             StateHasChanged(); // Allow the UI to display the loading indicator
             try
             {
-                var newItems = await ItemsProvider(new InfiniteScrollingItemsProviderRequest(items.Count, cts.Token));
+                var newItems = await ItemsProvider(new InfiniteScrollingItemsProviderRequest(items.Count, "", cts.Token));
                 if (!cts.IsCancellationRequested)
                 {
                     var length = items.Count;
@@ -107,9 +107,10 @@
 
         _items = new List<T>();
         _enumerationCompleted = false;
-        await LoadMoreItems();
+        // await LoadMoreItems();
     }
 
+    bool _init = false;
     protected override void OnParametersSet()
     {
         base.OnParametersSet();
@@ -117,7 +118,12 @@
         // Clear items when the provider changed
         if (ItemsProvider != _itemsProvider)
         {
+            _init = true;
             _items = new List<T>();
+            if (_init is false && InitialItems is not null)
+            {
+                _items = InitialItems.ToList();
+            }
             _enumerationCompleted = false;
         }
 

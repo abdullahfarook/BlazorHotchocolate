@@ -1,11 +1,11 @@
 ﻿<RfSelect Id="my-customized"
                     @ref="ContactList"
                     TOption="Person"
-                    Virtualized="false"
                     Width="100%"
+                    Virtualized="false"
                     Placeholder="search"
                     OnOptionsSearch="@OnSearch"
-                    MaximumSelectedOptions="3"
+                    MaximumSelectedOptions="1"
                     OptionText="@(item => item.LastName)"
                     OptionStyle="min-height: 40px;"
                     @bind-SelectedOptions="@SelectedItems">

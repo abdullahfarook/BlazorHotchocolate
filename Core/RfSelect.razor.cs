@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Components.Web.Virtualization;
 using Microsoft.FluentUI.AspNetCore.Components.Utilities;
 using Microsoft.JSInterop;
 
@@ -144,7 +145,10 @@ public partial class RfSelect<TOption> : ListComponentBase<TOption>
     [Parameter]
     public string TitleScrollToNext { get; set; } = "Next";
     [Parameter] public bool Virtualized { get; set; } = true;
+    List<TOption> _items = new();
+    public override IEnumerable<TOption>? Items { get => _items; set => _items = value?.ToList()??[]; }
     [Parameter] public InfiniteScrollingItemsProviderRequestDelegate<TOption>? ItemsProvider { get; set; }
+    private InfiniteScrolling<TOption>? _infiniteScrolling;
 
     /// <summary />
     private string? ListStyleValue => new StyleBuilder()
@@ -195,12 +199,25 @@ public partial class RfSelect<TOption> : ListComponentBase<TOption>
         if (Virtualized && ItemsProvider == null)
             throw new ArgumentNullException(nameof(ItemsProvider));
         base.OnParametersSet();
+
+        // Clear items when the provider changed
+        if (ItemsProvider != _itemsProvider)
+        {
+            _items = new List<TOption>();
+            _enumerationCompleted = false;
+        }
+
+        _itemsProvider = ItemsProvider;
     }
+    bool valueChanged = false;
+    private Virtualize<TOption> _virtualize;
 
     /// <summary />
     protected virtual async Task InputHandlerAsync(ChangeEventArgs e)
     {
-        _valueText = e.Value?.ToString() ?? string.Empty;
+        var value = e.Value?.ToString() ?? string.Empty;
+        valueChanged = _valueText != value;
+        _valueText = value;
 
         if (MaximumSelectedOptions > 0 && SelectedOptions?.Count() >= MaximumSelectedOptions)
         {
@@ -216,11 +233,20 @@ public partial class RfSelect<TOption> : ListComponentBase<TOption>
             Items = Items ?? Array.Empty<TOption>(),
             Text = _valueText,
         };
-
-        await OnOptionsSearch.InvokeAsync(args);
-
-        Items = args.Items.Take(MaximumOptionsSearch);
-        SelectableItem = Items.FirstOrDefault();
+        if (Virtualized)
+        {
+            if (valueChanged)
+            {
+                await RefreshDataAsync();
+            }
+        }
+        else
+        {
+            await OnOptionsSearch.InvokeAsync(args);
+            Items = args.Items.Take(MaximumOptionsSearch);
+            SelectableItem = Items.FirstOrDefault();
+        }
+        
     }
 
     /// <summary />
@@ -321,6 +347,14 @@ public partial class RfSelect<TOption> : ListComponentBase<TOption>
         if (firstRender)
         {
             Module = await JS.InvokeAsync<IJSObjectReference>("import", JAVASCRIPT_FILE);
+            if (Virtualized)
+            {
+                _module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/InfiniteScrolling.js");
+                _currentComponentReference = DotNetObjectReference.Create(this);
+                _instance = await _module.InvokeAsync<IJSObjectReference>("initialize", _lastItemIndicator, _currentComponentReference);
+                await LoadMoreItems();
+            }
+           
         }
     }
 
@@ -344,7 +378,8 @@ public partial class RfSelect<TOption> : ListComponentBase<TOption>
     /// <summary />
     protected override async Task OnSelectedItemChangedHandlerAsync(TOption? item)
     {
-        _valueText = string.Empty;
+        if(Multiple == false)
+            _valueText = string.Empty;
         IsMultiSelectOpened = false;
         await base.OnSelectedItemChangedHandlerAsync(item);
         await DisplayLastSelectedItemAsync();
