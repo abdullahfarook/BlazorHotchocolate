@@ -22,7 +22,8 @@ public partial class RfDataGrid<TGridItem> : FluentComponentBase, IHandleEvent, 
     ///
     /// You should supply either <see cref="Items"/> or <see cref="ItemsProvider"/>, but not both.
     /// </summary>
-    [Parameter] public IQueryable<TGridItem>? Items { get; set; }
+    [Parameter]
+    public IQueryable<TGridItem>? Items { get; set; }
 
     /// <summary>
     /// Gets or sets a callback that supplies data for the rid.
@@ -189,7 +190,8 @@ public partial class RfDataGrid<TGridItem> : FluentComponentBase, IHandleEvent, 
         _currentPageItemsChanged = new(EventCallback.Factory.Create<PaginationState>(this, RefreshDataCoreAsync));
         _renderColumnHeaders = RenderColumnHeaders;
         _renderNonVirtualizedRows = RenderNonVirtualizedRows;
-
+        _renderLastItem = RenderLastElement;
+        Console.Write("Ctor");
         // As a special case, we don't issue the first data load request until we've collected the initial set of columns
         // This is so we can apply default sort order (or any future per-column options) before loading data
         // We use EventCallbackSubscriber to safely hook this async operation into the synchronous rendering flow
@@ -203,7 +205,7 @@ public partial class RfDataGrid<TGridItem> : FluentComponentBase, IHandleEvent, 
     {
         // The associated pagination state may have been added/removed/replaced
         _currentPageItemsChanged.SubscribeOrMove(Pagination?.CurrentPageItemsChanged);
-
+        
         if (Items is not null && ItemsProvider is not null)
         {
             throw new InvalidOperationException($"FluentDataGrid requires one of {nameof(Items)} or {nameof(ItemsProvider)}, but both were specified.");
@@ -240,6 +242,19 @@ public partial class RfDataGrid<TGridItem> : FluentComponentBase, IHandleEvent, 
             _checkColumnOptionsPosition = false;
             _ = _jsModule?.InvokeVoidAsync("checkColumnOptionsPosition", _gridReference).AsTask();
         }
+    }
+    bool _isInitialized;
+    async ValueTask LoadInfiniteScrolling()
+    {
+        if(_isInitialized)
+        {
+            return;
+        }
+        _module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/InfiniteScrolling.js");
+        _currentComponentReference = DotNetObjectReference.Create(this);
+        _instance = await _module.InvokeAsync<IJSObjectReference>("initialize", _lastItemIndicator, _currentComponentReference);
+        _isInitialized = true;
+        await LoadMoreItems();
     }
 
     // Invoked by descendant columns at a special time during rendering
@@ -321,6 +336,7 @@ public partial class RfDataGrid<TGridItem> : FluentComponentBase, IHandleEvent, 
     // because in that case there's going to be a re-render anyway.
     private async Task RefreshDataCoreAsync()
     {
+        await LoadInfiniteScrolling();
         // Move into a "loading" state, cancelling any earlier-but-still-pending load
         _pendingDataLoadCancellationTokenSource?.Cancel();
         CancellationTokenSource? thisLoadCts = _pendingDataLoadCancellationTokenSource = new CancellationTokenSource();
@@ -406,11 +422,12 @@ public partial class RfDataGrid<TGridItem> : FluentComponentBase, IHandleEvent, 
     // Normalizes all the different ways of configuring a data source so they have common GridItemsProvider-shaped API
     private async ValueTask<GridItemsProviderResult<TGridItem>> ResolveItemsRequestAsync(GridItemsProviderRequest<TGridItem> request)
     {
-        if (ItemsProvider is not null)
-        {
-            return await ItemsProvider(request);
-        }
-        else if (Items is not null)
+        // if (ItemsProvider is not null)
+        // {
+        //     return await ItemsProvider(request);
+        // }
+        // else if (Items is not null)
+        if (Items is not null)
         {
             int totalItemCount = _asyncQueryExecutor is null ? Items.Count() : await _asyncQueryExecutor.CountAsync(Items);
             _ariaBodyRowCount = totalItemCount;

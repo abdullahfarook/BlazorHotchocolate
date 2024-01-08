@@ -15,7 +15,6 @@
             FinishCollectingColumns();
         }
         <ColumnsCollectedNotifier TGridItem="TGridItem" />
-
         <fluent-data-grid @ref=_gridReference
                           no-tabbing=@NoTabbing
                           generate-header="none"
@@ -62,6 +61,11 @@
                                 ItemsProvider="@ProvideVirtualizedItems"
                                 ItemContent="@(item => builder => RenderRow(builder, item.RowIndex, item.Data))"
                                 Placeholder="@(placeholderContext => builder => RenderPlaceholderRow(builder, placeholderContext))" />
+                    @if (IsLoading)
+                    {
+                        <div><span class="oi oi-reload spin"></span> Loading more items...</div>
+                    }         
+                    @_renderLastItem
                 }
                 else
                 {
@@ -146,5 +150,86 @@
                 }
             </FluentDataGridCell>
         }
+    }
+    
+    
+    private ElementReference _lastItemIndicator;
+    private RenderFragment _renderLastItem;
+    private DotNetObjectReference<RfDataGrid<TGridItem>> _currentComponentReference;
+    private IJSObjectReference? _module;
+    private IJSObjectReference? _instance;
+    private bool _enumerationCompleted;
+    private CancellationTokenSource? _loadItemsCts;
+    private InfiniteScrollingItemsProviderRequestDelegate<TGridItem>? _itemsProvider;
+    private bool IsLoading => _loadItemsCts != null;
+    [Parameter]
+    public string LastItemIndicatorElement { get; set; } = "div";
+    [JSInvokable]
+    public async Task LoadMoreItems()
+    {
+        if (_loadItemsCts != null)
+            return;
+
+        if (ItemsProvider == null)
+            return;
+
+        var items = Items;
+        var cts = new CancellationTokenSource();
+        _loadItemsCts = cts;
+        try
+        {
+            StateHasChanged(); // Allow the UI to display the loading indicator
+            try
+            {
+                var length = items?.Count() ?? 0;
+                var result = await ItemsProvider(new(
+                    length, Pagination?.ItemsPerPage, _sortByColumn, _sortByAscending, cts.Token));
+                if (!cts.IsCancellationRequested)
+                {
+                    items = items?.Concat(result.Items);
+
+                    if (items?.Count() == length)
+                    {
+                        _enumerationCompleted = true;
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.Assert(_instance != null);
+                        await _instance.InvokeVoidAsync("onNewItems");
+                    }
+                }
+            }
+            catch (OperationCanceledException oce) when (oce.CancellationToken == cts.Token)
+            {
+                // No-op; we canceled the operation, so it's fine to suppress this exception.
+            }
+        }
+        finally
+        {
+            _loadItemsCts = null;
+            cts.Dispose();
+        }
+
+        StateHasChanged(); // Display the new items and hide the loading indicator
+    }
+
+   
+    public async Task RefreshLazyDataAsync()
+    {
+        _loadItemsCts?.Cancel(); // Will be disposed by the LoadMoreData method
+        _loadItemsCts = null;
+
+        Items = new List<TGridItem>().AsQueryable();
+        _enumerationCompleted = false;
+        await LoadMoreItems();
+    }
+    private void RenderLastElement(RenderTreeBuilder __builder)
+    {
+        // This is the last element, so let's use a huge value
+        __builder.OpenElement(1000, LastItemIndicatorElement);
+        var style = _enumerationCompleted ? "height:0;width:0" : "height:1px;width:1px;flex-shrink:0";
+        __builder.AddAttribute(1001, "style", style);
+        __builder.AddElementReferenceCapture(1002, element => _lastItemIndicator = element);
+        __builder.CloseElement();
     }
 }

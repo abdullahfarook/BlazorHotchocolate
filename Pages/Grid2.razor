@@ -1,0 +1,187 @@
+﻿@page "/grid"
+@using System.Reactive.Subjects
+@using System.Reactive.Linq
+ <RfDataGrid ItemsProvider="ItemsProvider2" Virtualize="true" ItemSize="46" GenerateHeader="GenerateHeaderOption.Sticky" TGridItem="IDealer" >
+        <PropertyColumn Title="ID" Property="@(c => c!.Id)" />
+        <PropertyColumn Property="@(c => c!.Name)" Style="color:burlywood" />
+        <PropertyColumn Property="@(c => c!.Cnic)" />
+        <PropertyColumn Title="Company" Property="@(c => c!.Code)" Tooltip="true"/>
+        <PropertyColumn Property="@(c => c!.Ntn)" />
+        <TemplateColumn Title="Actions" Align="@Align.End">
+            <FluentButton ></FluentButton>
+            <FluentButton  />
+        </TemplateColumn>
+    </RfDataGrid>
+
+@code {
+     IEnumerable<IDealer> SelectedItems = Array.Empty<IDealer>();
+    string? _search = null;
+
+    private async Task OnSearch(OptionsSearchEventArgs<IDealer> e)
+    {
+        // e.Items = [new Dealer()];
+        // e.Items = _persons.Where(i => i.LastName.StartsWith(e.Text, StringComparison.OrdinalIgnoreCase) ||
+        //                               i.FirstName.StartsWith(e.Text, StringComparison.OrdinalIgnoreCase))
+        //     .OrderBy(i => i.LastName);
+        if(_search != e.Text)
+        {
+            _search = e.Text;
+            Reset();
+        }
+        if (string.IsNullOrEmpty(e.Text))
+        {
+            filter = new DealerFilterInput();
+        }
+        else
+        {
+           
+            filter.Name = new StringOperationFilterInput() {
+                Contains = e.Text
+            }; 
+        }
+        e.Items = await OnNext();
+    }
+    private Subject<List<IDealer>> ItemsSub = new();
+    private IObservable<List<IDealer>> Items0 => ItemsSub.AsObservable();
+    private int Initial = 0;
+
+    Task GetItems(InfiniteScrollingItemsProviderRequest request)
+    {
+        // await Task.Delay(2000);
+        return OnNext();
+    }
+    
+    [Inject] IRedApi RedApi { get; set; }
+
+    IDealer[] data = {
+    };
+
+    DealerFilterInput filter = new() {
+    // Name = new StringOperationFilterInput() {
+    //     Contains = "e"
+    // }
+    };
+    int pageSize = 15;
+    int index = 0;
+    int? first = 0;
+    int? last = null;
+    string? after = null;
+    string? before = null;
+    string? startCursor = null;
+    string? endCursor = null;
+    bool hasNextPage = false;
+    bool hasPreviousPage = false;
+    bool loading = true;
+    IDisposable? Subscription;
+
+    void Reset()
+    {
+        pageSize = 15;
+        index = 0;
+        first = 0;
+        last = null;
+        after = null;
+        before = null;
+        startCursor = null;
+        endCursor = null;
+        hasNextPage = false;
+        hasPreviousPage = false;
+        loading = true;
+    }
+    private async Task<IEnumerable<IDealer>> FetchData()
+    {
+       var result = await RedApi.GetPaginatedDealers.Watch(filter, first, last, after, before).FirstAsync();
+            data = result.Data!.Dealers!.Nodes!.ToArray();
+            ItemsSub.OnNext(data.ToList());
+            var pageInfo = result.Data!.Dealers!.PageInfo;
+            startCursor = pageInfo!.StartCursor;
+            endCursor = pageInfo!.EndCursor;
+            hasNextPage = pageInfo!.HasNextPage;
+            hasPreviousPage = pageInfo!.HasPreviousPage;
+            StateHasChanged();
+            return data;
+    }
+    private async Task<IEnumerable<IDealer>> OnNext()
+    {
+    // implement next
+    // Get the endCursor from the current page data
+        if (hasNextPage == false){
+            data = Array.Empty<IDealer>();
+        };
+        string? endCursor = this.endCursor;
+
+    // Set the after parameter to the endCursor
+        after = endCursor;
+        before = null;
+        first = pageSize;
+        last = null;
+        return await FetchData();
+
+    }
+    private void OnPrevious()
+    {
+        if (hasPreviousPage == false) return;
+    // implement previous
+        string? startCursor = this.startCursor;
+
+    // Set the before parameter to the startCursor
+        before = startCursor;
+        after = null;
+        first = null;
+        last = pageSize;
+
+        FetchData();
+    }
+
+
+    public async Task Edit(IDealer dealer)
+    {
+
+
+        var random = new Random();
+        var randomString = random.Next(1000, 9999).ToString();
+        var updateDealerInput = new UpdateDealerInput() {
+            Id = dealer.Id,
+            Name = dealer.Name + randomString,
+            Type = dealer.Type,
+            Cnic = dealer.Cnic,
+            IsFiler = dealer.IsFiler,
+            Ntn = dealer.Ntn,
+            Address = new AddressInput() {
+                City = dealer.Address!.City,
+                Country = dealer.Address!.Country,
+            },
+            Email = dealer.Email,
+            PhoneNumber = dealer.PhoneNumber
+        };
+        await RedApi.UpdateDealer.ExecuteAsync(updateDealerInput);
+    }
+
+    private Task<IEnumerable<IDealer>> ItemsProvider(InfiniteScrollingItemsProviderRequest context)
+    {
+        if(_search != context.Search)
+        {
+            _search = context.Search;
+            Reset();
+        }
+        if (string.IsNullOrEmpty(context.Search))
+        {
+            filter = new DealerFilterInput();
+        }
+        else
+        {
+           
+            filter.Name = new StringOperationFilterInput() {
+                Contains = context.Search
+            }; 
+        }
+        return OnNext();
+    }
+
+    private async ValueTask<GridItemsProviderResult<IDealer>> ItemsProvider2(GridItemsProviderRequest<IDealer> context)
+    {
+        var items = await OnNext();
+        return GridItemsProviderResult.From(items.ToList(), data.Length);
+    }
+
+}
